@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WagerBot — Discord Server Setup Guide</title>
+<style>
+  @page { margin: 1in; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    color: #1a1a2e;
+    line-height: 1.7;
+    font-size: 14px;
+  }
+  h1 {
+    font-size: 28px;
+    border-bottom: 3px solid #6c5ce7;
+    padding-bottom: 12px;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 40px;
+  }
+  h2 {
+    font-size: 20px;
+    margin-top: 40px;
+    margin-bottom: 12px;
+    color: #6c5ce7;
+  }
+  h3 {
+    font-size: 16px;
+    margin-top: 24px;
+    margin-bottom: 8px;
+  }
+  .channel-list {
+    background: #f4f4f8;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 16px 0;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 2;
+  }
+  .channel-list .category {
+    font-weight: 700;
+    color: #6c5ce7;
+    font-size: 14px;
+  }
+  .channel-list .channel {
+    padding-left: 20px;
+    color: #333;
+  }
+  .channel-list .desc {
+    color: #888;
+    font-style: italic;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  th {
+    background: #6c5ce7;
+    color: white;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #e8e8f0;
+  }
+  tr:nth-child(even) { background: #f9f9fc; }
+  .step {
+    background: #f4f4f8;
+    border-left: 4px solid #6c5ce7;
+    padding: 16px 20px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .step-number {
+    display: inline-block;
+    background: #6c5ce7;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 28px;
+    font-weight: 700;
+    font-size: 14px;
+    margin-right: 10px;
+  }
+  .warning {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 14px 18px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+  }
+  .tip {
+    background: #d4edda;
+    border-left: 4px solid #28a745;
+    padding: 14px 18px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+  }
+  code {
+    background: #e8e8f0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .page-break { page-break-before: always; }
+  .welcome-box {
+    background: #2c2f33;
+    color: #dcddde;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .toc { margin: 20px 0 40px; }
+  .toc a { color: #6c5ce7; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc li { margin: 6px 0; }
+</style>
+</head>
+<body>
+
+<h1>WagerBot — Discord Server Setup Guide</h1>
+<p class="subtitle">Complete instructions for setting up your competitive gaming wager server.</p>
+
+<div class="toc">
+<strong>Contents</strong>
+<ol>
+  <li><a href="#create">Create the Server</a></li>
+  <li><a href="#channels">Channel Setup</a></li>
+  <li><a href="#roles">Roles &amp; Permissions</a></li>
+  <li><a href="#bot">Bot Installation</a></li>
+  <li><a href="#welcome">Welcome Message &amp; Rules</a></li>
+  <li><a href="#channel-topics">Channel Topics &amp; Descriptions</a></li>
+  <li><a href="#moderation">Moderation Setup</a></li>
+  <li><a href="#commands">Bot Commands Reference</a></li>
+  <li><a href="#launch">Launch Checklist</a></li>
+</ol>
+</div>
+
+<!-- ─────────────────────────────────────── -->
+<h2 id="create">1. Create the Server</h2>
+
+<div class="step">
+  <span class="step-number">1</span>
+  Open Discord → click the <strong>+</strong> button on the left sidebar → <strong>Create My Own</strong>.
+</div>
+<div class="step">
+  <span class="step-number">2</span>
+  Select <strong>"For a club or community"</strong>.
+</div>
+<div class="step">
+  <span class="step-number">3</span>
+  Name it something clean and memorable. Examples: <strong>WagerZone</strong>, <strong>StakeUp</strong>, <strong>The Arena</strong>.
+</div>
+<div class="step">
+  <span class="step-number">4</span>
+  Upload a server icon (square, at least 512×512px).
+</div>
+<div class="step">
+  <span class="step-number">5</span>
+  Go to <strong>Server Settings → Community</strong> and enable Community Server. This unlocks the welcome screen, server discovery, and announcement channels.
+</div>
+
+<!-- ─────────────────────────────────────── -->
+<h2 id="channels">2. Channel Setup</h2>
+
+<p>Create exactly these categories and channels. Don't add more — every extra channel splits attention and makes the server feel dead.</p>
+
+<div class="channel-list">
+  <div class="category">📋 INFO</div>
+  <div class="channel"># welcome <span class="desc">— what this is, how to start</span></div>
+  <div class="channel"># rules <span class="desc">— short, clear rules</span></div>
+  <div class="channel"># link-accounts <span class="desc">— how to connect game accounts</span></div>
+  <br>
+  <div class="category">🎮 WAGER</div>
+  <div class="channel"># find-match <span class="desc">— players post looking-for-match here</span></div>
+  <div class="channel"># active-wagers <span class="desc">— bot auto-posts new wagers (read-only)</span></div>
+  <div class="channel"># results <span class="desc">— bot auto-posts match results (read-only)</span></div>
+  <br>
+  <div class="category">💬 COMMUNITY</div>
+  <div class="channel"># general <span class="desc">— chat, trash talk, vibes</span></div>
+  <div class="channel"># clips <span class="desc">— gameplay clips, highlights</span></div>
+  <br>
+  <div class="category">⚠️ DISPUTES</div>
+  <div class="channel"># disputes <span class="desc">— bot auto-posts disputes (read-only for members)</span></div>
+  <div class="channel"># evidence <span class="desc">— players submit screenshots/clips here</span></div>
+  <br>
+  <div class="category">📊 STATS</div>
+  <div class="channel"># leaderboard <span class="desc">— bot posts weekly leaderboard (read-only)</span></div>
+</div>
+
+<div class="warning">
+  <strong>Important:</strong> The bot looks for channels by exact name. Make sure <code>#active-wagers</code>, <code>#results</code>, and <code>#disputes</code> are named exactly as shown above (lowercase, hyphens).
+</div>
+
+<h3>Channel Permissions</h3>
+
+<table>
+  <tr><th>Channel</th><th>@everyone</th><th>Bot</th><th>Notes</th></tr>
+  <tr><td>#welcome</td><td>Read only</td><td>Send</td><td>Lock after writing welcome message</td></tr>
+  <tr><td>#rules</td><td>Read only</td><td>—</td><td>Only admins edit</td></tr>
+  <tr><td>#link-accounts</td><td>Read only</td><td>—</td><td>Instructions only</td></tr>
+  <tr><td>#find-match</td><td>Read + Send</td><td>Send</td><td>Main hub — keep open</td></tr>
+  <tr><td>#active-wagers</td><td>Read only</td><td>Send</td><td>Bot posts only</td></tr>
+  <tr><td>#results</td><td>Read only</td><td>Send</td><td>Bot posts only</td></tr>
+  <tr><td>#general</td><td>Read + Send</td><td>—</td><td>Open chat</td></tr>
+  <tr><td>#clips</td><td>Read + Send + Attach</td><td>—</td><td>Allow file uploads</td></tr>
+  <tr><td>#disputes</td><td>Read only</td><td>Send</td><td>Bot posts only, mods can send</td></tr>
+  <tr><td>#evidence</td><td>Read + Send + Attach</td><td>—</td><td>Allow image uploads</td></tr>
+  <tr><td>#leaderboard</td><td>Read only</td><td>Send</td><td>Bot posts only</td></tr>
+</table>
+
+<!-- ─────────────────────────────────────── -->
+<div class="page-break"></div>
+<h2 id="roles">3. Roles &amp; Permissions</h2>
+
+<p>Create these roles in this order (top = highest priority):</p>
+
+<table>
+  <tr><th>Role</th><th>Color</th><th>Key Permissions</th><th>How Assigned</th></tr>
+  <tr>
+    <td><strong>Admin</strong></td>
+    <td>Red (#e74c3c)</td>
+    <td>Administrator</td>
+    <td>Manual — you and co-owners only</td>
+  </tr>
+  <tr>
+    <td><strong>Moderator</strong></td>
+    <td>Orange (#e67e22)</td>
+    <td>Moderate Members, Manage Messages, send in #disputes</td>
+    <td>Manual — trusted community members</td>
+  </tr>
+  <tr>
+    <td><strong>WagerBot</strong></td>
+    <td>Purple (#6c5ce7)</td>
+    <td>Send Messages, Embed Links, Attach Files, Use Slash Commands</td>
+    <td>Auto — assigned to the bot on invite</td>
+  </tr>
+  <tr>
+    <td><strong>Trusted</strong></td>
+    <td>Gold (#f1c40f)</td>
+    <td>Same as @everyone + visible badge</td>
+    <td>Auto — bot assigns when reputation ≥ 150</td>
+  </tr>
+  <tr>
+    <td><strong>Verified</strong></td>
+    <td>Green (#2ecc71)</td>
+    <td>Same as @everyone + visible badge</td>
+    <td>Auto — bot assigns after first completed wager</td>
+  </tr>
+  <tr>
+    <td><strong>@everyone</strong></td>
+    <td>—</td>
+    <td>Read channels, send in open channels, use slash commands</td>
+    <td>Default</td>
+  </tr>
+</table>
+
+<div class="tip">
+  <strong>Tip:</strong> Don't gate wagering behind any role. Let anyone use <code>/wager</code> immediately. Roles are for badges and trust signals, not access control.
+</div>
+
+<!-- ─────────────────────────────────────── -->
+<h2 id="bot">4. Bot Installation</h2>
+
+<div class="step">
+  <span class="step-number">1</span>
+  Go to <a href="https://discord.com/developers/applications">discord.com/developers/applications</a> and select your WagerBot application.
+</div>
+<div class="step">
+  <span class="step-number">2</span>
+  Go to <strong>OAuth2 → URL Generator</strong>.
+</div>
+<div class="step">
+  <span class="step-number">3</span>
+  Under <strong>Scopes</strong>, check: <code>bot</code> and <code>applications.commands</code>.
+</div>
+<div class="step">
+  <span class="step-number">4</span>
+  Under <strong>Bot Permissions</strong>, check:
+  <ul>
+    <li>Send Messages</li>
+    <li>Send Messages in Threads</li>
+    <li>Embed Links</li>
+    <li>Attach Files</li>
+    <li>Read Message History</li>
+    <li>Use Slash Commands</li>
+    <li>Add Reactions</li>
+  </ul>
+</div>
+<div class="step">
+  <span class="step-number">5</span>
+  Copy the generated URL, open it in your browser, and select your server.
+</div>
+<div class="step">
+  <span class="step-number">6</span>
+  In <strong>Server Settings → Integrations</strong>, verify WagerBot appears and its commands are enabled.
+</div>
+
+<div class="warning">
+  <strong>Important:</strong> In the Discord Developer Portal under <strong>Bot → Privileged Gateway Intents</strong>, enable <strong>Server Members Intent</strong>. This is required for the welcome DM feature.
+</div>
+
+<!-- ─────────────────────────────────────── -->
+<h2 id="welcome">5. Welcome Message &amp; Rules</h2>
+
+<h3>#welcome — Post This Exactly</h3>
+
+<div class="welcome-box">
+<strong>Welcome to [Server Name]! 🎮</strong><br><br>
+Challenge anyone to a match. Stake tokens. Winner takes the pot.<br><br>
+<strong>Get started in 30 seconds:</strong><br>
+→ <code>/deposit 1000</code> — grab free starter tokens<br>
+→ <code>/wager @opponent game amount</code> — challenge someone<br>
+→ <code>/link</code> — connect your game accounts for auto-verified results<br><br>
+Head to <strong>#find-match</strong> to find an opponent. Good luck.
+</div>
+
+<h3>#rules — Post This</h3>
+
+<div class="welcome-box">
+<strong>Rules</strong><br><br>
+1. <strong>No fake results.</strong> Submitting a fake screenshot or lying about a result = strike. 3 strikes = permanent ban.<br><br>
+2. <strong>Submit screenshots.</strong> After every match, both players submit a screenshot of the final score using <code>/submit</code>. The system reads it automatically.<br><br>
+3. <strong>Respect deadlines.</strong> You have 90 minutes to play and submit after a wager is accepted. No-shows get a reputation penalty.<br><br>
+4. <strong>No collusion.</strong> Alternating wins with the same person to farm tokens will get both accounts banned.<br><br>
+5. <strong>Disputes are public.</strong> If there's a disagreement, it goes to #disputes. Mods review evidence and decide. Their call is final.<br><br>
+6. <strong>Be cool.</strong> Trash talk is fine. Harassment is not.
+</div>
+
+<h3>#link-accounts — Post This</h3>
+
+<div class="welcome-box">
+<strong>Link Your Game Accounts</strong><br><br>
+Linking lets the bot verify your match results automatically — no screenshots needed for supported games.<br><br>
+<code>/link platform:Riot username:YourName#TAG</code> — League of Legends &amp; Valorant<br>
+<code>/link platform:EA username:YourEAID</code> — FIFA / EA FC<br>
+<code>/link platform:Steam username:YourSteamID</code> — Rocket League<br>
+<code>/link platform:Epic username:YourEpicName</code> — Fortnite<br>
+<code>/link platform:Activision username:YourActiID</code> — Call of Duty<br><br>
+<strong>Auto-verified games:</strong> League of Legends, Valorant (via Riot API)<br>
+<strong>Screenshot-verified:</strong> FIFA, Rocket League, CoD, Fortnite<br><br>
+You can wager without linking — you'll just need to submit screenshots manually.
+</div>
+
+<!-- ─────────────────────────────────────── -->
+<div class="page-break"></div>
+<h2 id="channel-topics">6. Channel Topics &amp; Descriptions</h2>
+
+<p>Set these as the channel topic (the text that appears at the top of each channel):</p>
+
+<table>
+  <tr><th>Channel</th><th>Topic</th></tr>
+  <tr><td>#find-match</td><td>Post what game you want to play and how much you want to wager. Use /wager to make it official.</td></tr>
+  <tr><td>#active-wagers</td><td>Live wagers. Bot posts here automatically.</td></tr>
+  <tr><td>#results</td><td>Match results. See who's winning.</td></tr>
+  <tr><td>#general</td><td>Talk about whatever. Keep it chill.</td></tr>
+  <tr><td>#clips</td><td>Post your best plays, clutch moments, and highlights.</td></tr>
+  <tr><td>#disputes</td><td>Active disputes. Mods use /resolve to settle.</td></tr>
+  <tr><td>#evidence</td><td>Submit screenshots and clips for disputed matches here.</td></tr>
+  <tr><td>#leaderboard</td><td>Top players updated weekly.</td></tr>
+</table>
+
+<!-- ─────────────────────────────────────── -->
+<h2 id="moderation">7. Moderation Setup</h2>
+
+<h3>What Moderators Do</h3>
+<ul>
+  <li>Review disputes in <code>#disputes</code></li>
+  <li>Look at evidence in <code>#evidence</code></li>
+  <li>Use <code>/resolve dispute_id outcome</code> to settle disputes</li>
+  <li>Outcomes: <strong>creator_wins</strong>, <strong>opponent_wins</strong>, or <strong>refund</strong></li>
+</ul>
+
+<h3>Moderator Guidelines</h3>
+<ol>
+  <li>Always check both players' screenshots before deciding.</li>
+  <li>If one player submitted a screenshot and the other didn't, the player with evidence wins.</li>
+  <li>If both screenshots are unclear, refund both players.</li>
+  <li>If a screenshot is clearly edited/faked, the other player wins and the faker gets a strike via the reputation system.</li>
+  <li>Be fast — disputes should be resolved within 2 hours during active hours.</li>
+</ol>
+
+<h3>AutoMod Recommendations</h3>
+<p>In <strong>Server Settings → AutoMod</strong>, set up these rules:</p>
+<ul>
+  <li>Block common slurs and harassment</li>
+  <li>Block spam (5+ identical messages in 10 seconds)</li>
+  <li>Block links in <code>#active-wagers</code> and <code>#results</code> (bot-only channels)</li>
+</ul>
+
+<!-- ─────────────────────────────────────── -->
+<h2 id="commands">8. Bot Commands Reference</h2>
+
+<table>
+  <tr><th>Command</th><th>What It Does</th><th>Who Can Use</th></tr>
+  <tr><td><code>/wager @user game amount</code></td><td>Challenge someone to a match</td><td>Everyone</td></tr>
+  <tr><td><code>/accept wager_id</code></td><td>Accept a wager challenge</td><td>Challenged player</td></tr>
+  <tr><td><code>/submit wager_id screenshot</code></td><td>Submit final score screenshot</td><td>Wager participants</td></tr>
+  <tr><td><code>/report wager_id win/loss</code></td><td>Manual result (fallback)</td><td>Wager participants</td></tr>
+  <tr><td><code>/cancel wager_id</code></td><td>Cancel a pending wager</td><td>Wager creator</td></tr>
+  <tr><td><code>/balance</code></td><td>Check your token balance</td><td>Everyone</td></tr>
+  <tr><td><code>/deposit amount</code></td><td>Get free demo tokens</td><td>Everyone</td></tr>
+  <tr><td><code>/reputation [user]</code></td><td>Check reputation score</td><td>Everyone</td></tr>
+  <tr><td><code>/leaderboard</code></td><td>Top players by wins</td><td>Everyone</td></tr>
+  <tr><td><code>/link platform username</code></td><td>Link a game account</td><td>Everyone</td></tr>
+  <tr><td><code>/history</code></td><td>Your recent wagers</td><td>Everyone</td></tr>
+  <tr><td><code>/resolve dispute_id outcome</code></td><td>Settle a dispute</td><td>Moderators only</td></tr>
+</table>
+
+<!-- ─────────────────────────────────────── -->
+<div class="page-break"></div>
+<h2 id="launch">9. Launch Checklist</h2>
+
+<p>Go through this before inviting anyone:</p>
+
+<table>
+  <tr><th>✓</th><th>Task</th></tr>
+  <tr><td>☐</td><td>Server created with icon and name</td></tr>
+  <tr><td>☐</td><td>Community Server enabled in settings</td></tr>
+  <tr><td>☐</td><td>All 11 channels created with correct names</td></tr>
+  <tr><td>☐</td><td>Channel permissions set (bot-only channels locked)</td></tr>
+  <tr><td>☐</td><td>All 5 roles created (Admin, Moderator, WagerBot, Trusted, Verified)</td></tr>
+  <tr><td>☐</td><td>Bot invited with correct permissions</td></tr>
+  <tr><td>☐</td><td>Server Members Intent enabled in Developer Portal</td></tr>
+  <tr><td>☐</td><td>Bot is online and responding to <code>/balance</code></td></tr>
+  <tr><td>☐</td><td>Welcome message posted in #welcome</td></tr>
+  <tr><td>☐</td><td>Rules posted in #rules</td></tr>
+  <tr><td>☐</td><td>Link instructions posted in #link-accounts</td></tr>
+  <tr><td>☐</td><td>Channel topics set for all channels</td></tr>
+  <tr><td>☐</td><td>AutoMod rules configured</td></tr>
+  <tr><td>☐</td><td>At least 2 moderators assigned</td></tr>
+  <tr><td>☐</td><td>Test wager completed end-to-end (create → accept → submit → settle)</td></tr>
+  <tr><td>☐</td><td>Test dispute flow (both claim win → dispute → mod resolves)</td></tr>
+</table>
+
+<div class="tip">
+  <strong>Launch tip:</strong> Before opening to the public, run 5-10 test wagers with friends. Seed the #results channel with activity so new members see it's real and active. A dead-looking server kills conversion.
+</div>
+
+<br><br>
+<hr>
+<p style="color: #888; font-size: 12px; text-align: center;">WagerBot Setup Guide · Generated for internal use</p>
+
+</body>
+</html>

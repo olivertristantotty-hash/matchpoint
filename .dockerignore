@@ -1,0 +1,8 @@
+node_modules
+dist
+.env
+web
+scripts
+docs
+drizzle
+*.png
