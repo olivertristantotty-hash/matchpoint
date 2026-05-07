@@ -296,6 +296,43 @@ export async function POST(req: NextRequest) {
           break;
         }
       }
+
+      // DM the user that their withdrawal is pending
+      try {
+        const { users: usersTable } = await import("@/lib/user");
+        const [dbUser] = await db.select().from(usersTable).where(eq(usersTable.id, user.id));
+        if (dbUser?.discordId) {
+          const dmChannelRes = await fetch("https://discord.com/api/v10/users/@me/channels", {
+            method: "POST",
+            headers: { Authorization: `Bot ${DISCORD_TOKEN}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ recipient_id: dbUser.discordId }),
+          });
+          if (dmChannelRes.ok) {
+            const dmChannel = (await dmChannelRes.json()) as { id: string };
+            await fetch(`https://discord.com/api/v10/channels/${dmChannel.id}/messages`, {
+              method: "POST",
+              headers: { Authorization: `Bot ${DISCORD_TOKEN}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                embeds: [{
+                  title: "💸 Withdrawal Pending",
+                  description: `Your withdrawal of **${amount} MP** ($${usdValue}) is being processed.`,
+                  color: 0xf39c12,
+                  fields: [
+                    { name: "Amount", value: `${amount} MP ($${usdValue})`, inline: true },
+                    { name: "Fee", value: `${WITHDRAWAL_FEE_TOKENS} MP`, inline: true },
+                    { name: "To Address", value: `\`${destinationAddress}\``, inline: false },
+                    { name: "Status", value: "⏳ Pending", inline: true },
+                  ],
+                  footer: { text: "MATCHPOINT — You'll receive a DM when it's sent." },
+                  timestamp: new Date().toISOString(),
+                }],
+              }),
+            });
+          }
+        }
+      } catch (dmErr) {
+        console.error("[Withdraw] Failed to DM user:", dmErr);
+      }
     }
   } catch (err) {
     console.error("[Withdraw] Failed to notify admin channel:", err);
@@ -334,6 +371,5 @@ export async function POST(req: NextRequest) {
     withdrawalFee: WITHDRAWAL_FEE_TOKENS,
     usdValue,
     destinationAddress,
-    message: "Withdrawal submitted. You'll receive your USDC within 24 hours.",
   });
 }

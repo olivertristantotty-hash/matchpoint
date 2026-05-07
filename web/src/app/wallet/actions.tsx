@@ -99,7 +99,7 @@ export default function WalletActions({
       const data = await res.json();
 
       if (res.ok) {
-        setMessage({ text: data.message || `Withdrawal submitted. You'll receive your USDC within 24 hours.`, ok: true });
+        setMessage({ text: "Withdrawal submitted. Status: Pending.", ok: true });
         setAmount("");
         setTimeout(() => window.location.reload(), 2000);
       } else {
