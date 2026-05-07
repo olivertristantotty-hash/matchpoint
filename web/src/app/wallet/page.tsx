@@ -180,6 +180,7 @@ export default async function WalletPage() {
         recentDeposits={serializedDeposits}
         recentWithdrawals={serializedWithdrawals}
         maintenanceMode={maintenanceMode}
+        bonusClaimed={wallet?.bonusClaimed === 1}
       />
 
       {/* Transaction History */}

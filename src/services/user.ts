@@ -6,6 +6,7 @@ import { nanoid } from "nanoid";
 
 const WELCOME_BONUS_MP = 500;   // 500 MP = $5.00
 const MAX_BONUS_USERS = 20;    // first 20 users only
+const PROMO_CODE = "FIRST20MAY";
 
 export class UserService {
   /** Get or create a user from their Discord info */
@@ -34,26 +35,7 @@ export class UserService {
         .where(eq(wallets.bonusClaimed, 1));
 
       if (count < MAX_BONUS_USERS) {
-        await db.update(wallets)
-          .set({
-            available: sql`${wallets.available} + ${WELCOME_BONUS_MP}`,
-            bonusClaimed: 1,
-            bonusAmount: WELCOME_BONUS_MP,
-            updatedAt: new Date(),
-          })
-          .where(eq(wallets.userId, userId));
-
-        // Log the bonus transaction
-        await db.insert(transactions).values({
-          id: nanoid(),
-          userId,
-          type: "deposit",
-          amount: WELCOME_BONUS_MP,
-          wagerId: null,
-          description: "Welcome bonus",
-        });
-
-        // DM the user about their bonus
+        // Don't auto-credit — send them the promo code via DM instead
         try {
           const { getBotClient } = await import("../bot/notifications.js");
           const client = getBotClient();
@@ -61,19 +43,16 @@ export class UserService {
             const discordUser = await client.users.fetch(discordId);
             await discordUser.send({
               embeds: [{
-                title: "🎉 Welcome Bonus — 500 MP",
+                title: "🎁 Welcome Bonus — $5 Free",
                 description: [
-                  `You've been credited **500 MP ($5.00)** to get started.`,
+                  `You've been selected for a **500 MP ($5.00)** welcome bonus!`,
                   ``,
-                  `**How to use it:**`,
-                  `• Right-click any player → Apps → **Challenge to Wager**`,
-                  `• Or use \`/wager @opponent game amount\``,
+                  `**Redeem it on the website:**`,
+                  `1. Go to https://matchpoint-rho-ten.vercel.app/wallet`,
+                  `2. Sign in with Discord`,
+                  `3. Enter promo code: **\`${PROMO_CODE}\`**`,
                   ``,
-                  `**Withdrawal rules:**`,
-                  `• Wager at least 2,500 MP total before withdrawing`,
-                  `• Win at least 1 match against a player who has deposited`,
-                  ``,
-                  `Good luck. Check your balance anytime with \`/balance\`.`,
+                  `This code is limited to the first 20 players. Use it before it runs out.`,
                 ].join("\n"),
                 color: 0x27ae60,
                 footer: { text: "MATCHPOINT" },
@@ -81,8 +60,7 @@ export class UserService {
             });
           }
         } catch (dmErr) {
-          // DMs might be disabled — not critical
-          console.log("[User] Could not DM welcome bonus notification:", (dmErr as Error).message);
+          console.log("[User] Could not DM promo code:", (dmErr as Error).message);
         }
       }
     } catch (err) {

@@ -30,6 +30,7 @@ interface WalletActionsProps {
   recentDeposits: DepositRecord[];
   recentWithdrawals: WithdrawalRecord[];
   maintenanceMode: boolean;
+  bonusClaimed: boolean;
 }
 
 export default function WalletActions({
@@ -40,6 +41,7 @@ export default function WalletActions({
   recentDeposits,
   recentWithdrawals,
   maintenanceMode,
+  bonusClaimed,
 }: WalletActionsProps) {
   const [tab, setTab] = useState<"deposit" | "withdrawal">("deposit");
   const [amount, setAmount] = useState("");
@@ -48,6 +50,9 @@ export default function WalletActions({
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
   const [depositAddress, setDepositAddress] = useState(initialDepositAddress);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoMessage, setPromoMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [addressLoading, setAddressLoading] = useState(false);
   const [addressError, setAddressError] = useState<string | null>(null);
 
@@ -410,6 +415,74 @@ export default function WalletActions({
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Promo Code */}
+      {!bonusClaimed && (
+        <div style={{
+          marginTop: "20px", paddingTop: "16px",
+          borderTop: "1px solid var(--border)",
+        }}>
+          <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "8px" }}>
+            Promo Code
+          </div>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <input
+              type="text"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+              placeholder="Enter code"
+              style={{
+                flex: 1, padding: "10px 14px", borderRadius: "8px",
+                border: "1px solid var(--border)", background: "var(--bg)",
+                color: "var(--text)", fontSize: "14px", fontFamily: "monospace",
+                letterSpacing: "1px",
+              }}
+            />
+            <button
+              onClick={async () => {
+                if (!promoCode.trim()) return;
+                setPromoLoading(true);
+                setPromoMessage(null);
+                try {
+                  const res = await fetch("/api/promo", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code: promoCode.trim() }),
+                  });
+                  const data = await res.json();
+                  if (res.ok) {
+                    setPromoMessage({ text: data.message, ok: true });
+                    setTimeout(() => window.location.reload(), 1500);
+                  } else {
+                    setPromoMessage({ text: data.error, ok: false });
+                  }
+                } catch {
+                  setPromoMessage({ text: "Network error", ok: false });
+                } finally {
+                  setPromoLoading(false);
+                }
+              }}
+              disabled={promoLoading || !promoCode.trim()}
+              style={{
+                padding: "10px 20px", borderRadius: "8px", border: "none",
+                background: "var(--green)", color: "white",
+                fontSize: "13px", fontWeight: 600, cursor: "pointer",
+                opacity: promoLoading ? 0.5 : 1,
+              }}
+            >
+              {promoLoading ? "..." : "Redeem"}
+            </button>
+          </div>
+          {promoMessage && (
+            <div style={{
+              marginTop: "8px", fontSize: "12px",
+              color: promoMessage.ok ? "var(--green)" : "var(--red)",
+            }}>
+              {promoMessage.text}
             </div>
           )}
         </div>
