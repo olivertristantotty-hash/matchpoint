@@ -40,7 +40,7 @@ Respond ONLY with valid JSON matching this format. If you cannot read the score,
   lol: {
     key: "lol",
     name: "League of Legends",
-    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/1085660/capsule_231x87.jpg",
+    thumbnailUrl: undefined,
     rules: [
       "Mode: Custom Game, Summoner's Rift",
       "Format: 1v1 — First Blood, 100 CS, or First Tower",
@@ -60,7 +60,7 @@ Respond ONLY with valid JSON. If unreadable, respond with {"error": "unreadable"
   valorant: {
     key: "valorant",
     name: "Valorant",
-    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/2215430/capsule_231x87.jpg",
+    thumbnailUrl: undefined,
     rules: [
       "Mode: Custom Game",
       "Map: Agreed before match",
@@ -120,7 +120,7 @@ Respond ONLY with valid JSON. If unreadable, respond with {"error": "unreadable"
   fortnite: {
     key: "fortnite",
     name: "Fortnite",
-    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/1172470/capsule_231x87.jpg",
+    thumbnailUrl: undefined,
     rules: [
       "Mode: 1v1 Creative (Box Fight or Zone Wars)",
       "Format: First to 5 kills or Best of 5 rounds",
@@ -140,7 +140,7 @@ Respond ONLY with valid JSON. If unreadable, respond with {"error": "unreadable"
     key: "nba2k",
     name: "NBA 2K",
     subGames: ["NBA 2K25", "NBA 2K24", "NBA 2K23"],
-    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/2708950/capsule_231x87.jpg",
+    thumbnailUrl: undefined,
     rules: [
       "Mode: Play Now Online or MyTeam",
       "Quarter Length: 5 minutes",
@@ -162,7 +162,7 @@ Respond ONLY with valid JSON matching this format. If you cannot read the score,
     key: "madden",
     name: "Madden NFL",
     subGames: ["Madden 25", "Madden 24", "Madden 23"],
-    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/2583640/capsule_231x87.jpg",
+    thumbnailUrl: undefined,
     rules: [
       "Mode: Head to Head",
       "Quarter Length: 5 minutes",
@@ -184,7 +184,7 @@ Respond ONLY with valid JSON matching this format. If you cannot read the score,
     key: "mariokart",
     name: "Mario Kart",
     subGames: ["Mario Kart 8 Deluxe"],
-    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/601510/capsule_231x87.jpg",
+    thumbnailUrl: undefined,
     rules: [
       "Mode: VS Race or Battle",
       "Items: All Items",
