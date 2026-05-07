@@ -99,7 +99,7 @@ export default function WalletActions({
       const data = await res.json();
 
       if (res.ok) {
-        setMessage({ text: `Withdrawal submitted. ${data.usdValue} USDC will be sent to your address.`, ok: true });
+        setMessage({ text: data.message || `Withdrawal submitted. You'll receive your USDC within 24 hours.`, ok: true });
         setAmount("");
         setTimeout(() => window.location.reload(), 2000);
       } else {
@@ -266,14 +266,14 @@ export default function WalletActions({
             <label style={{ display: "block", color: "var(--text-muted)", fontSize: "12px", marginBottom: "6px" }}>
               Amount (MP)
             </label>
-            <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "12px" }}>
+            <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "12px" }}>
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="1000"
                 min={1000}
-                max={balance}
+                max={balance - fee}
                 required
                 style={{
                   flex: 1, padding: "12px 16px", borderRadius: "8px",
@@ -281,6 +281,18 @@ export default function WalletActions({
                   color: "var(--text)", fontSize: "16px",
                 }}
               />
+              <button
+                type="button"
+                onClick={() => setAmount(String(Math.max(0, balance - fee)))}
+                style={{
+                  padding: "10px 16px", borderRadius: "8px",
+                  border: "1px solid var(--border)", background: "var(--bg)",
+                  color: "var(--accent)", fontSize: "13px", fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Max
+              </button>
               <span style={{ color: "var(--text-muted)", fontSize: "14px", minWidth: "80px" }}>
                 ≈ ${(tokenAmount / 100).toFixed(2)}
               </span>

@@ -243,103 +243,10 @@ export async function POST(req: NextRequest) {
     status: "pending",
   });
 
-  // 8. Call NOWPayments Payout API (requires JWT auth)
-  let nowpaymentsPayoutId: string | null = null;
-  try {
-    // Get JWT token first
-    const NOWPAYMENTS_EMAIL = process.env.NOWPAYMENTS_EMAIL ?? "";
-    const NOWPAYMENTS_PASSWORD = process.env.NOWPAYMENTS_PASSWORD ?? "";
+  // 8. Skip NOWPayments payout API — queue for manual processing
+  // The withdrawal stays as "pending" and you process it manually from NOWPayments dashboard
 
-    const authRes = await fetch(`${NOWPAYMENTS_API_URL}/auth`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: NOWPAYMENTS_EMAIL, password: NOWPAYMENTS_PASSWORD }),
-    });
-
-    if (!authRes.ok) {
-      const authText = await authRes.text();
-      console.error(`[Withdraw] NOWPayments auth failed (${authRes.status}): ${authText}`);
-      throw new Error(`Auth failed: ${authRes.status}`);
-    }
-
-    const { token: jwtToken } = (await authRes.json()) as { token: string };
-
-    // Now call payout with JWT + API key
-    const res = await fetch(`${NOWPAYMENTS_API_URL}/payout`, {
-      method: "POST",
-      headers: {
-        "x-api-key": NOWPAYMENTS_API_KEY,
-        "Authorization": `Bearer ${jwtToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        withdrawals: [{
-          address: destinationAddress,
-          currency: "usdcsol",
-          amount: parseFloat(usdValue),
-        }],
-      }),
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      console.error(
-        `[Withdraw] NOWPayments payout failed (${res.status}): ${text}`,
-      );
-      throw new Error(`Payout API returned ${res.status}`);
-    }
-
-    const data = (await res.json()) as { id?: string | number };
-    nowpaymentsPayoutId = data.id ? String(data.id) : null;
-
-    // 9. On success: update to "processing"
-    await db
-      .update(withdrawals)
-      .set({
-        status: "processing",
-        nowpaymentsPayoutId,
-        updatedAt: new Date(),
-      })
-      .where(eq(withdrawals.id, withdrawalId));
-  } catch (err) {
-    console.error("[Withdraw] Payout API error:", err);
-
-    // 10. On failure: update to "failed" and refund
-    await db
-      .update(withdrawals)
-      .set({ status: "failed", updatedAt: new Date() })
-      .where(eq(withdrawals.id, withdrawalId));
-
-    // Refund balance + fee
-    await db
-      .update(wallets)
-      .set({
-        available: sql`${wallets.available} + ${totalDeduction}`,
-        updatedAt: new Date(),
-      })
-      .where(eq(wallets.userId, user.id));
-
-    // Log refund transaction
-    await db.insert(transactions).values({
-      id: nanoid(),
-      userId: user.id,
-      type: "wager_refund",
-      amount: totalDeduction,
-      wagerId: null,
-      description: `Refund failed withdrawal ${withdrawalId}`,
-    });
-
-    return NextResponse.json(
-      {
-        status: "failed",
-        withdrawalId,
-        error: "Withdrawal failed. Your balance has been refunded.",
-      },
-      { status: 502 },
-    );
-  }
-
-  // 11. Save/update withdrawal address in userPaymentProfiles
+  // Save/update withdrawal address in userPaymentProfiles
   try {
     const [profile] = await db
       .select()
@@ -362,17 +269,16 @@ export async function POST(req: NextRequest) {
       });
     }
   } catch (err) {
-    // Non-critical — log but don't fail the withdrawal
     console.error("[Withdraw] Failed to save withdrawal address:", err);
   }
 
   return NextResponse.json({
-    status: "processing",
+    status: "pending",
     withdrawalId,
-    nowpaymentsPayoutId,
     tokenAmount: amount,
     withdrawalFee: WITHDRAWAL_FEE_TOKENS,
     usdValue,
     destinationAddress,
+    message: "Withdrawal submitted. You'll receive your USDC within 24 hours.",
   });
 }
