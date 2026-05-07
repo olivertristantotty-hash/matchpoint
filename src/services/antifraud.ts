@@ -1,6 +1,6 @@
 import { eq, and, gte, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { wagers, users } from "../db/schema.js";
+import { wagers, users, wallets, gameAccounts, deposits } from "../db/schema.js";
 
 export interface FraudCheck {
   passed: boolean;
@@ -16,10 +16,110 @@ export class AntiFraudService {
       this.checkBanned(opponentId),
       this.checkRateLimit(creatorId),
       this.checkCollusion(creatorId, opponentId),
+      this.checkBonusAbuse(creatorId, opponentId),
     ]);
 
     const failed = checks.find(c => !c.passed);
     return failed ?? { passed: true };
+  }
+
+  // ── Bonus Eligibility Check ──
+
+  /**
+   * Check if a user is eligible to receive the welcome bonus.
+   * Requirements:
+   * 1. Discord account must be older than 30 days
+   * 2. Must have a verified game account (Steam or Xbox with code-in-bio)
+   * 3. Must not share a game account with any existing user
+   * 4. Must not have already claimed a bonus
+   */
+  async checkBonusEligibility(userId: string, discordAccountCreatedAt: Date): Promise<FraudCheck> {
+    // 1. Discord account age (30+ days)
+    const accountAgeMs = Date.now() - discordAccountCreatedAt.getTime();
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+    if (accountAgeMs < thirtyDays) {
+      return {
+        passed: false,
+        reason: "Your Discord account must be at least 30 days old to claim the welcome bonus.",
+      };
+    }
+
+    // 2. Must have a verified game account (Steam or Xbox)
+    const accounts = await db
+      .select()
+      .from(gameAccounts)
+      .where(eq(gameAccounts.userId, userId));
+
+    const hasVerifiedAccount = accounts.some(
+      a => a.platform === "steam" || a.platform === "xbox"
+    );
+
+    if (!hasVerifiedAccount) {
+      return {
+        passed: false,
+        reason: "You need a verified Steam or Xbox account to claim the bonus. Use `/link platform:Steam` or `/link platform:Xbox` first.",
+      };
+    }
+
+    // 3. Check if bonus already claimed
+    const [wallet] = await db
+      .select()
+      .from(wallets)
+      .where(eq(wallets.userId, userId));
+
+    if (wallet?.bonusClaimed === 1) {
+      return { passed: false, reason: "You've already claimed your welcome bonus." };
+    }
+
+    return { passed: true };
+  }
+
+  /**
+   * Bonus abuse prevention:
+   * Two bonus-only users (never deposited real money) cannot wager each other
+   * more than 3 times per day. This prevents the "make 5 accounts, funnel to one" attack.
+   */
+  private async checkBonusAbuse(user1: string, user2: string): Promise<FraudCheck> {
+    // Check if both users are bonus-only (never made a real deposit)
+    const [wallet1] = await db.select().from(wallets).where(eq(wallets.userId, user1));
+    const [wallet2] = await db.select().from(wallets).where(eq(wallets.userId, user2));
+
+    if (!wallet1 || !wallet2) return { passed: true };
+
+    // If either user has made a real deposit, no restriction
+    const [deposit1] = await db
+      .select()
+      .from(deposits)
+      .where(and(eq(deposits.userId, user1), eq(deposits.credited, 1)));
+    const [deposit2] = await db
+      .select()
+      .from(deposits)
+      .where(and(eq(deposits.userId, user2), eq(deposits.credited, 1)));
+
+    if (deposit1 || deposit2) return { passed: true };
+
+    // Both are bonus-only — limit matches between them
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentBetween = await db
+      .select()
+      .from(wagers)
+      .where(and(
+        gte(wagers.createdAt, oneDayAgo),
+      ));
+
+    const matchesBetween = recentBetween.filter(w =>
+      (w.creatorId === user1 && w.opponentId === user2) ||
+      (w.creatorId === user2 && w.opponentId === user1)
+    );
+
+    if (matchesBetween.length >= 3) {
+      return {
+        passed: false,
+        reason: "You've reached the daily match limit with this player. Challenge someone else or make a deposit to remove limits.",
+      };
+    }
+
+    return { passed: true };
   }
 
   /** Check if user is banned */

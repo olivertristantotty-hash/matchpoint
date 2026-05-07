@@ -41,6 +41,9 @@ export async function analyzeScreenshot(
     } else if (provider === "anthropic") {
       if (!process.env.ANTHROPIC_API_KEY) return { success: false, error: "ANTHROPIC_API_KEY not set" };
       raw = await callAnthropic(imageUrl, profile.ocrPrompt);
+    } else if (provider === "gemini") {
+      if (!process.env.GEMINI_API_KEY) return { success: false, error: "GEMINI_API_KEY not set" };
+      raw = await callGemini(imageUrl, profile.ocrPrompt);
     } else {
       return { success: false, error: `Unknown vision provider: ${provider}` };
     }
@@ -126,4 +129,34 @@ async function callAnthropic(imageUrl: string, prompt: string): Promise<string> 
 
   const json = await res.json() as any;
   return json.content?.[0]?.text ?? "";
+}
+
+async function callGemini(imageUrl: string, prompt: string): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY not set");
+
+  // Fetch image and convert to base64
+  const imgRes = await fetch(imageUrl);
+  const buffer = Buffer.from(await imgRes.arrayBuffer());
+  const base64 = buffer.toString("base64");
+  const mimeType = imgRes.headers.get("content-type") || "image/png";
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: mimeType, data: base64 } },
+          ],
+        }],
+      }),
+    },
+  );
+
+  const json = await res.json() as any;
+  return json.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 }

@@ -1,4 +1,5 @@
 import { SlashCommandBuilder, ContextMenuCommandBuilder, ApplicationCommandType } from "discord.js";
+import { GAME_CHOICES, LEADERBOARD_GAME_CHOICES } from "./game-choices.js";
 
 export const commands = [
   // ── Context Menu (right-click) ──
@@ -22,16 +23,8 @@ export const commands = [
     .setDescription("Challenge someone to a wager")
     .addUserOption(opt => opt.setName("opponent").setDescription("Who to challenge").setRequired(true))
     .addStringOption(opt => opt.setName("game").setDescription("Game to play").setRequired(true)
-      .addChoices(
-        { name: "FIFA / EA FC", value: "fifa" },
-        { name: "League of Legends", value: "lol" },
-        { name: "Valorant", value: "valorant" },
-        { name: "Rocket League", value: "rocketleague" },
-        { name: "Call of Duty", value: "cod" },
-        { name: "Fortnite", value: "fortnite" },
-        { name: "Other", value: "other" },
-      ))
-    .addIntegerOption(opt => opt.setName("amount").setDescription("Tokens to wager").setRequired(true).setMinValue(10)),
+      .addChoices(...GAME_CHOICES))
+    .addIntegerOption(opt => opt.setName("amount").setDescription("MP to wager").setRequired(true).setMinValue(10)),
 
   new SlashCommandBuilder()
     .setName("accept")
@@ -61,12 +54,12 @@ export const commands = [
 
   new SlashCommandBuilder()
     .setName("balance")
-    .setDescription("Check your token balance"),
+    .setDescription("Check your balance"),
 
   new SlashCommandBuilder()
     .setName("deposit")
-    .setDescription("Get free starter tokens (demo)")
-    .addIntegerOption(opt => opt.setName("amount").setDescription("Amount of tokens").setRequired(true).setMinValue(1).setMaxValue(10000)),
+    .setDescription("Get free starter MP (demo)")
+    .addIntegerOption(opt => opt.setName("amount").setDescription("Amount of MP").setRequired(true).setMinValue(1).setMaxValue(10000)),
 
   new SlashCommandBuilder()
     .setName("reputation")
@@ -75,7 +68,29 @@ export const commands = [
 
   new SlashCommandBuilder()
     .setName("leaderboard")
-    .setDescription("See the top players by winnings"),
+    .setDescription("See the top players")
+    .addStringOption(opt => opt.setName("category").setDescription("Ranking metric")
+      .addChoices(
+        { name: "Wins", value: "wins" },
+        { name: "Earnings", value: "earnings" },
+        { name: "Win Rate", value: "win_rate" },
+        { name: "Streak", value: "streak" },
+        { name: "Reputation", value: "reputation" },
+      ))
+    .addStringOption(opt => opt.setName("period").setDescription("Time period")
+      .addChoices(
+        { name: "Weekly", value: "weekly" },
+        { name: "Monthly", value: "monthly" },
+        { name: "Seasonal", value: "seasonal" },
+        { name: "All Time", value: "all-time" },
+      ))
+    .addStringOption(opt => opt.setName("game").setDescription("Filter by game")
+      .addChoices(...LEADERBOARD_GAME_CHOICES))
+    .addStringOption(opt => opt.setName("mode").setDescription("Wager mode")
+      .addChoices(
+        { name: "💰 MP (Real)", value: "real" },
+        { name: "🎮 FP (Freeplay)", value: "freeplay" },
+      )),
 
   new SlashCommandBuilder()
     .setName("link")
@@ -87,6 +102,7 @@ export const commands = [
         { name: "Steam", value: "steam" },
         { name: "Epic Games", value: "epic" },
         { name: "Activision", value: "activision" },
+        { name: "Medal.tv", value: "medal" },
       ))
     .addStringOption(opt => opt.setName("username").setDescription("Your username/ID on that platform").setRequired(true)),
 
@@ -109,21 +125,61 @@ export const commands = [
 
   new SlashCommandBuilder()
     .setName("daily")
-    .setDescription("Claim your daily free coins (1,000 coins every 24 hours)"),
+    .setDescription("Claim your daily FP (1,000 FP every 24 hours)"),
 
   new SlashCommandBuilder()
     .setName("freeplay")
     .setDescription("Challenge someone to a freeplay wager (no real money)")
     .addUserOption(opt => opt.setName("opponent").setDescription("Who to challenge").setRequired(true))
     .addStringOption(opt => opt.setName("game").setDescription("Game to play").setRequired(true)
+      .addChoices(...GAME_CHOICES))
+    .addIntegerOption(opt => opt.setName("amount").setDescription("FP to wager").setRequired(true).setMinValue(10)),
+
+  // ── Host Wager Lobby ──
+
+  new SlashCommandBuilder()
+    .setName("host")
+    .setDescription("Host an open wager lobby")
+    .addStringOption(opt => opt.setName("game").setDescription("Game to play").setRequired(true)
+      .addChoices(...GAME_CHOICES))
+    .addStringOption(opt => opt.setName("platform").setDescription("Platform").setRequired(true)
       .addChoices(
-        { name: "FIFA / EA FC", value: "fifa" },
-        { name: "League of Legends", value: "lol" },
-        { name: "Valorant", value: "valorant" },
-        { name: "Rocket League", value: "rocketleague" },
-        { name: "Call of Duty", value: "cod" },
-        { name: "Fortnite", value: "fortnite" },
-        { name: "Other", value: "other" },
+        { name: "PC", value: "pc" },
+        { name: "Xbox", value: "xbox" },
+        { name: "PlayStation", value: "playstation" },
+        { name: "Cross-Platform", value: "crossplay" },
       ))
-    .addIntegerOption(opt => opt.setName("amount").setDescription("Free coins to wager").setRequired(true).setMinValue(10)),
+    .addIntegerOption(opt => opt.setName("amount").setDescription("Amount to wager").setRequired(true).setMinValue(10))
+    .addStringOption(opt => opt.setName("game_mode").setDescription("Game mode")
+      .addChoices(
+        { name: "1v1", value: "1v1" },
+        { name: "2v2", value: "2v2" },
+        { name: "3v3", value: "3v3" },
+        { name: "5v5", value: "5v5" },
+        { name: "Battle Royale", value: "br" },
+        { name: "Free-for-All", value: "ffa" },
+      ))
+    .addStringOption(opt => opt.setName("team_size").setDescription("Team size")
+      .addChoices(
+        { name: "Solo", value: "solo" },
+        { name: "Duo", value: "duo" },
+        { name: "Trio", value: "trio" },
+        { name: "Squad (4)", value: "squad" },
+      ))
+    .addStringOption(opt => opt.setName("rounds_format").setDescription("Rounds format")
+      .addChoices(
+        { name: "Best of 1", value: "Bo1" },
+        { name: "Best of 3", value: "Bo3" },
+        { name: "Best of 5", value: "Bo5" },
+        { name: "First to 5", value: "Ft5" },
+        { name: "First to 10", value: "Ft10" },
+      ))
+    .addStringOption(opt => opt.setName("rules_notes").setDescription("Custom rules or notes")),
+
+  // ── Lookup ──
+
+  new SlashCommandBuilder()
+    .setName("lookup")
+    .setDescription("Look up a wager by ID")
+    .addStringOption(opt => opt.setName("wager_id").setDescription("Wager ID to look up").setRequired(true)),
 ];

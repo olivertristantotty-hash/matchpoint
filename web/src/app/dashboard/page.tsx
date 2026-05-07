@@ -45,7 +45,7 @@ export default async function Dashboard() {
         <div>
           <h1 style={{ fontSize: "24px", fontWeight: 700, marginBottom: "4px" }}>{user.username}</h1>
           <p style={{ color: "var(--text-muted-dark)", fontSize: "13px" }}>
-            {repTier} · {user.reputation} rep · Max wager: {maxWager > 0 ? `${maxWager} tokens` : "Freeplay only"}
+            {repTier} · {user.reputation} rep · Max wager: {maxWager > 0 ? `${maxWager} MP` : "Freeplay only"}
           </p>
         </div>
         <a href="/wallet" style={{
@@ -58,7 +58,7 @@ export default async function Dashboard() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "10px", marginBottom: "28px" }}>
         <Card label="Available" value={`${wallet?.available ?? 0}`} sub={`≈ $${((wallet?.available ?? 0) / 100).toFixed(2)}`} color="var(--green)" />
         <Card label="Escrowed" value={`${wallet?.escrowed ?? 0}`} sub="In wagers" color="var(--accent)" />
-        <Card label="Free Coins" value={`${wallet?.freeplay ?? 0}`} sub="Freeplay" color="var(--accent-hover)" />
+        <Card label="FP" value={`${wallet?.freeplay ?? 0}`} sub="Freeplay" color="var(--accent-hover)" />
         <Card label="Win Rate" value={settled.length > 0 ? `${Math.round((wins / settled.length) * 100)}%` : "—"} sub={`${wins}W / ${losses}L`} color="var(--text)" />
       </div>
 
@@ -141,7 +141,7 @@ function WagerRow({ wager, userId }: { wager: any; userId: string }) {
       <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
         {isFreeplay && <span style={{ fontSize: "10px", background: "var(--border)", padding: "2px 6px", borderRadius: "4px", color: "var(--accent-hover)" }}>FREE</span>}
         <span style={{ fontWeight: 600 }}>{wager.game.toUpperCase()}</span>
-        <span style={{ color: "var(--text-muted-dark)" }}>{wager.amount} {isFreeplay ? "coins" : "tokens"}</span>
+        <span style={{ color: "var(--text-muted-dark)" }}>{wager.amount} {isFreeplay ? "FP" : "MP"}</span>
       </div>
       <span style={{ color: statusColor[wager.status] ?? "var(--text-muted-dark)", fontWeight: 600, fontSize: "12px" }}>
         {statusLabel[wager.status] ?? wager.status}

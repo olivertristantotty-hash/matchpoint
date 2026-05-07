@@ -28,18 +28,19 @@ export default async function Transactions() {
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           {/* Header */}
           <div style={{
-            display: "grid", gridTemplateColumns: "100px 1fr 90px",
+            display: "grid", gridTemplateColumns: "100px 1fr 120px 90px",
             padding: "8px 14px", fontSize: "10px", color: "var(--text-muted-dark)",
             textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600,
           }}>
             <div>Type</div>
             <div>Description</div>
+            <div>Date</div>
             <div style={{ textAlign: "right" }}>Amount</div>
           </div>
 
           {txns.map(tx => (
             <div key={tx.id} style={{
-              display: "grid", gridTemplateColumns: "100px 1fr 90px",
+              display: "grid", gridTemplateColumns: "100px 1fr 120px 90px",
               padding: "10px 14px", background: "var(--bg-card)",
               border: "1px solid var(--border)", borderRadius: "8px",
               fontSize: "13px", alignItems: "center",
@@ -51,6 +52,11 @@ export default async function Transactions() {
               </div>
               <div style={{ color: "var(--text-muted-dark)", fontSize: "12px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {tx.description || "—"}
+              </div>
+              <div style={{ color: "var(--text-muted-dark)", fontSize: "11px" }}>
+                {tx.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                {" "}
+                {tx.createdAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
               </div>
               <div style={{
                 textAlign: "right", fontWeight: 700, fontFamily: "monospace", fontSize: "13px",
@@ -68,7 +74,8 @@ export default async function Transactions() {
 
 function typeLabel(type: string) {
   const map: Record<string, string> = {
-    deposit: "Deposit", withdrawal: "Withdraw", escrow_lock: "Escrow",
+    deposit: "Deposit", deposit_credit: "Deposit", withdrawal: "Withdraw",
+    withdrawal_fee: "Fee", escrow_lock: "Escrow",
     escrow_release: "Release", wager_win: "Winnings", wager_refund: "Refund", platform_fee: "Fee",
   };
   return map[type] ?? type;
@@ -76,7 +83,8 @@ function typeLabel(type: string) {
 
 function typeColor(type: string) {
   const map: Record<string, string> = {
-    deposit: "var(--green)", withdrawal: "var(--red)", wager_win: "var(--green)",
+    deposit: "var(--green)", deposit_credit: "var(--green)", withdrawal: "var(--red)",
+    withdrawal_fee: "var(--red)", wager_win: "var(--green)",
     wager_refund: "var(--accent)", escrow_lock: "var(--accent)",
   };
   return map[type] ?? "var(--text-muted-dark)";

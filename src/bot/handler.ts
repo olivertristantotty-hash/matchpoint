@@ -7,15 +7,18 @@ import { walletService } from "../services/wallet.js";
 import { wagerService } from "../services/wager.js";
 import { reputationService } from "../services/reputation.js";
 import { getGameProfile } from "../services/games/profiles.js";
+import { parseGameChoice } from "./game-choices.js";
 import { announceResult, announceDispute } from "./notifications.js";
 import { acceptButton, reportButtons } from "./buttons.js";
+import { lobbyService } from "../services/lobby.js";
+import { leaderboardService, type LeaderboardFilters, type RankingCategory, type TimeWindow, type GameFilter, type ModeFilter } from "../services/leaderboard.js";
 import { nanoid } from "nanoid";
 
 export async function handleCommand(interaction: ChatInputCommandInteraction) {
   const { commandName } = interaction;
 
   try {
-    const ephemeralCommands = ["balance", "deposit", "cancel", "reputation", "link", "history", "submit", "report", "daily"];
+    const ephemeralCommands = ["balance", "deposit", "cancel", "reputation", "link", "history", "submit", "report", "daily", "host", "lookup"];
     await interaction.deferReply({ ephemeral: ephemeralCommands.includes(commandName) });
 
     switch (commandName) {
@@ -33,12 +36,14 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
       case "history": return await handleHistory(interaction);
       case "daily":  return await handleDaily(interaction);
       case "freeplay": return await handleFreeplay(interaction);
+      case "host":   return await handleHost(interaction);
+      case "lookup": return await handleLookup(interaction);
       default:
         await interaction.editReply({ content: "Unknown command." });
     }
   } catch (err: any) {
     const msg = err.message || "Something went wrong.";
-    console.error(`[Bot] Command error (${commandName}):`, msg);
+    console.error(`[Bot] Command error (${commandName}):`, msg, err.stack);
     try {
       await interaction.editReply({ content: `Error: ${msg}` });
     } catch { /* expired */ }
@@ -73,7 +78,7 @@ async function handleBalance(interaction: ChatInputCommandInteraction) {
   await interaction.editReply({
     content: [
       `💰 **Real:** ${balance.available} available · ${balance.escrowed} escrowed`,
-      `🎮 **Freeplay:** ${balance.freeplay} coins · ${balance.freeplayEscrowed} escrowed`,
+      `🎮 **Freeplay:** ${balance.freeplay} FP · ${balance.freeplayEscrowed} escrowed`,
     ].join("\n"),
   });
 }
@@ -84,13 +89,14 @@ async function handleDeposit(interaction: ChatInputCommandInteraction) {
   await walletService.deposit(user.id, amount, "Demo deposit");
   const balance = await walletService.getBalance(user.id);
   await interaction.editReply({
-    content: `+${amount} tokens. Balance: **${balance.available}**`,
+    content: `+${amount} MP. Balance: **${balance.available}**`,
   });
 }
 
 async function handleWager(interaction: ChatInputCommandInteraction) {
   const opponent = interaction.options.getUser("opponent", true);
-  const game = interaction.options.getString("game", true);
+  const gameRaw = interaction.options.getString("game", true);
+  const { franchise: game, title } = parseGameChoice(gameRaw);
   const amount = interaction.options.getInteger("amount", true);
 
   if (opponent.bot) return interaction.editReply({ content: "Can't wager against a bot." });
@@ -105,8 +111,14 @@ async function handleWager(interaction: ChatInputCommandInteraction) {
     interaction.guildId ?? undefined, interaction.channelId ?? undefined,
   );
 
+  // Store title in rulesNotes if provided
+  if (title) {
+    await db.update(wagers).set({ rulesNotes: title }).where(eq(wagers.id, wager.id));
+  }
+
   const profile = getGameProfile(game);
   const gameName = profile?.name ?? game.toUpperCase();
+  const displayName = title ? `${gameName} — ${title}` : gameName;
 
   // Get rep badges for both players
   const creatorRep = await reputationService.getReputation(creator.id);
@@ -116,49 +128,18 @@ async function handleWager(interaction: ChatInputCommandInteraction) {
 
   // Post a clean one-liner in the public channel with buttons
   await interaction.editReply({
-    content: `⚔️ ${interaction.user} (${creatorBadge}) vs ${opponent} (${opponentBadge}) · **${gameName}** · **${amount}** tokens each`,
+    content: `⚔️ ${interaction.user} (${creatorBadge}) vs ${opponent} (${opponentBadge}) · **${displayName}** · **${amount}** MP each`,
     components: [acceptButton(wager.id)],
   });
 
-  // Create a private thread for this wager
+  // DM the opponent about the challenge
   try {
-    const channel = interaction.channel;
-    if (channel && channel.type === ChannelType.GuildText) {
-      const thread = await (channel as TextChannel).threads.create({
-        name: `${interaction.user.username} vs ${opponent.username} · ${gameName}`,
-        autoArchiveDuration: ThreadAutoArchiveDuration.OneHour,
-        type: ChannelType.PrivateThread,
-        reason: `Wager ${wager.id}`,
-      });
-
-      // Add both players
-      await thread.members.add(interaction.user.id);
-      await thread.members.add(opponent.id);
-
-      // Store thread ID on the wager
-      await db.update(wagers).set({ channelId: thread.id }).where(eq(wagers.id, wager.id));
-
-      const rulesBlock = profile
-        ? profile.rules.map(r => `• ${r}`).join("\n")
-        : "• Custom rules — agree before playing.";
-
-      const highStakes = amount >= 5000;
-
-      await thread.send([
-        `**Wager Details**`,
-        `${interaction.user} (${creatorBadge}) vs ${opponent} (${opponentBadge}) · **${gameName}**`,
-        `Stake: **${amount}** tokens each · Pot: **${amount * 2}** · Fee: **${wager.fee}** · Winner gets: **${amount * 2 - wager.fee}**`,
-        ``,
-        `**Rules:**`,
-        rulesBlock,
-        highStakes ? `\n⚠️ High-stakes — streaming recommended for dispute protection.` : "",
-        ``,
-        `${opponent}, hit **Accept Wager** above to accept.`,
-      ].filter(Boolean).join("\n"));
+    const client = (await import("./notifications.js")).getBotClient();
+    if (client) {
+      const opponentDiscord = await client.users.fetch(opponent.id);
+      await opponentDiscord.send(`⚔️ **${interaction.user.username}** challenged you to a **${displayName}** wager for **${amount}** MP in MATCHPOINT! Check #find-match to accept.`);
     }
-  } catch (err) {
-    console.error("[Thread] Failed to create wager thread:", err);
-  }
+  } catch {}
 }
 
 async function handleAccept(interaction: ChatInputCommandInteraction) {
@@ -179,7 +160,7 @@ async function handleAccept(interaction: ChatInputCommandInteraction) {
         await (thread as any).send({
           content: [
             `✅ **Match is ON!**`,
-            `Both players have **${wager.amount}** tokens locked.`,
+            `Both players have **${wager.amount}** MP locked.`,
             `Go play! When done, hit a button below.`,
             ``,
             `Deadline: <t:${Math.floor(wager.matchDeadline!.getTime() / 1000)}:R>`,
@@ -232,13 +213,13 @@ async function handleReport(interaction: ChatInputCommandInteraction) {
 
   const settlement = await wagerService.reportResult(wagerId, user.id, result);
 
-  if (settlement.status === "waiting") {
-    await interaction.editReply({ content: `Recorded. Waiting for the other player.` });
+  if (settlement.status === "waiting" || settlement.status === "waiting_confirm") {
+    await interaction.editReply({ content: `Submitted. Waiting for your opponent.` });
   } else if (settlement.status === "settled") {
     const settledWager = await wagerService.getWager(wagerId);
 
     await interaction.editReply({
-      content: `**Settled!** Winner gets **${settlement.winnings}** tokens.`,
+      content: `**Settled!** Winner gets **${settlement.winnings}** MP.`,
     });
 
     // Post result in thread
@@ -248,7 +229,7 @@ async function handleReport(interaction: ChatInputCommandInteraction) {
       if (client && settledWager?.channelId) {
         const thread = await client.channels.fetch(settledWager.channelId);
         if (thread?.isTextBased()) {
-          await (thread as any).send(`🏆 **Match settled!** <@${settlement.winnerId}> wins **${settlement.winnings}** tokens. Thread will archive shortly.`);
+          await (thread as any).send(`🏆 **Match settled!** <@${settlement.winnerId}> wins **${settlement.winnings}** MP. Thread will archive shortly.`);
         }
       }
     } catch {}
@@ -263,6 +244,7 @@ async function handleReport(interaction: ChatInputCommandInteraction) {
         loserDb[0]?.username ?? "Unknown",
         settledWager.game,
         settlement.winnings,
+        wagerId,
       );
     }
   } else if (settlement.status === "disputed") {
@@ -296,7 +278,7 @@ async function handleCancel(interaction: ChatInputCommandInteraction) {
   const wagerId = interaction.options.getString("wager_id", true);
   const user = await userService.ensureUser(interaction.user.id, interaction.user.username);
   await wagerService.cancelWager(wagerId, user.id);
-  await interaction.editReply({ content: `Cancelled. Tokens refunded.` });
+  await interaction.editReply({ content: `Cancelled. MP refunded.` });
 }
 
 async function handleReputation(interaction: ChatInputCommandInteraction) {
@@ -314,33 +296,24 @@ async function handleReputation(interaction: ChatInputCommandInteraction) {
     content: [
       `${badge} **${target.username}** · ${rep.tier}`,
       `Strikes: ${rep.strikes}/3${rep.banned ? " · **BANNED**" : ""}`,
-      `Max wager: **${maxWager > 0 ? `${maxWager} tokens` : "Freeplay only"}**`,
+      `Max wager: **${maxWager > 0 ? `${maxWager} MP` : "Freeplay only"}**`,
     ].join("\n"),
   });
 }
 
 async function handleLeaderboard(interaction: ChatInputCommandInteraction) {
-  const allUsers = await db.select().from(users).orderBy(desc(users.reputation)).limit(50);
-  if (allUsers.length === 0) return interaction.editReply({ content: "No players yet!" });
+  const category = (interaction.options.getString("category") ?? "wins") as RankingCategory;
+  const period = (interaction.options.getString("period") ?? "seasonal") as TimeWindow;
+  const game = interaction.options.getString("game") as GameFilter | null;
+  const mode = (interaction.options.getString("mode") ?? "real") as ModeFilter;
 
-  const leaderboard: { username: string; wins: number; losses: number; reputation: number }[] = [];
-  for (const u of allUsers) {
-    const w = await db.select().from(wagers).where(and(
-      eq(wagers.status, "settled"),
-      sql`${wagers.creatorId} = ${u.id} OR ${wagers.opponentId} = ${u.id}`,
-    ));
-    const wins = w.filter(x => x.winnerId === u.id).length;
-    if (w.length > 0) leaderboard.push({ username: u.username, wins, losses: w.length - wins, reputation: u.reputation });
-  }
+  const filters: LeaderboardFilters = { category, period, mode, ...(game ? { game } : {}) };
 
-  leaderboard.sort((a, b) => b.wins - a.wins);
-  if (leaderboard.length === 0) return interaction.editReply({ content: "No completed wagers yet!" });
+  const user = await userService.ensureUser(interaction.user.id, interaction.user.username);
+  const result = await leaderboardService.getLeaderboard(filters, user.id);
+  const embed = leaderboardService.buildLeaderboardEmbed(result);
 
-  const lines = leaderboard.slice(0, 10).map((u, i) => {
-    const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`;
-    return `${medal} **${u.username}** · ${u.wins}W/${u.losses}L · Rep ${u.reputation}`;
-  });
-  await interaction.editReply({ content: lines.join("\n") });
+  await interaction.editReply({ embeds: [embed] });
 }
 
 async function handleLink(interaction: ChatInputCommandInteraction) {
@@ -410,8 +383,33 @@ async function handleResolve(interaction: ChatInputCommandInteraction) {
   const mod = await userService.ensureUser(interaction.user.id, interaction.user.username);
   const result = await wagerService.resolveDispute(disputeId, outcome, mod.id);
   await interaction.editReply({
-    content: `Resolved: ${outcome.replace(/_/g, " ")}. ${result.status === "settled" ? `Winner paid ${(result as any).winnings} tokens.` : "Refunded."}`,
+    content: `Resolved: ${outcome.replace(/_/g, " ")}. ${result.status === "settled" ? `Winner paid ${(result as any).winnings} MP.` : "Refunded."}`,
   });
+
+  // Archive and lock the wager thread after dispute resolution
+  try {
+    const { disputes } = await import("../db/schema.js");
+    const [dispute] = await db.select().from(disputes).where(eq(disputes.id, disputeId));
+    if (dispute) {
+      const wager = await wagerService.getWager(dispute.wagerId);
+      if (wager?.channelId) {
+        const { getBotClient } = await import("./notifications.js");
+        const client = getBotClient();
+        if (client) {
+          const thread = await client.channels.fetch(wager.channelId);
+          if (thread?.isTextBased()) {
+            await (thread as any).send(`✅ **Dispute resolved** by moderator. Outcome: ${outcome.replace(/_/g, " ")}.`);
+            setTimeout(async () => {
+              try {
+                await (thread as any).setArchived(true);
+                await (thread as any).setLocked(true);
+              } catch {}
+            }, 5000);
+          }
+        }
+      }
+    }
+  } catch {}
 }
 
 async function handleHistory(interaction: ChatInputCommandInteraction) {
@@ -425,7 +423,7 @@ async function handleHistory(interaction: ChatInputCommandInteraction) {
   const lines = recent.map(w => {
     const icon = w.status === "settled" ? (w.winnerId === user.id ? "✅" : "❌") :
       w.status === "active" ? "⏳" : w.status === "disputed" ? "⚠️" : "🚫";
-    return `${icon} **${w.game}** · ${w.amount} tokens · ${w.status}`;
+    return `${icon} **${w.game}** · ${w.amount} MP · ${w.status}`;
   });
   await interaction.editReply({ content: lines.join("\n") });
 }
@@ -454,13 +452,14 @@ async function handleDaily(interaction: ChatInputCommandInteraction) {
 
   const balance = await walletService.getBalance(user.id);
   await interaction.editReply({
-    content: `🎁 Claimed **${DAILY_AMOUNT}** free coins! Freeplay balance: **${balance.freeplay}**`,
+    content: `🎁 Claimed **${DAILY_AMOUNT}** FP! Freeplay balance: **${balance.freeplay}**`,
   });
 }
 
 async function handleFreeplay(interaction: ChatInputCommandInteraction) {
   const opponent = interaction.options.getUser("opponent", true);
-  const game = interaction.options.getString("game", true);
+  const gameRaw = interaction.options.getString("game", true);
+  const { franchise: game, title } = parseGameChoice(gameRaw);
   const amount = interaction.options.getInteger("amount", true);
 
   if (opponent.bot) return interaction.editReply({ content: "Can't wager against a bot." });
@@ -476,8 +475,14 @@ async function handleFreeplay(interaction: ChatInputCommandInteraction) {
     "freeplay",
   );
 
+  // Store title in rulesNotes if provided
+  if (title) {
+    await db.update(wagers).set({ rulesNotes: title }).where(eq(wagers.id, wager.id));
+  }
+
   const profile = getGameProfile(game);
   const gameName = profile?.name ?? game.toUpperCase();
+  const displayName = title ? `${gameName} — ${title}` : gameName;
 
   const creatorRep = await reputationService.getReputation(creator.id);
   const opponentRep = await reputationService.getReputation(opponentUser!.id);
@@ -485,41 +490,178 @@ async function handleFreeplay(interaction: ChatInputCommandInteraction) {
   const opponentBadge = opponentRep ? reputationService.getRepBadge(opponentRep.reputation) : "✅ 100";
 
   await interaction.editReply({
-    content: `🎮 **FREE PLAY** · ${interaction.user} (${creatorBadge}) vs ${opponent} (${opponentBadge}) · **${gameName}** · **${amount}** coins each`,
+    content: `🎮 **FREE PLAY** · ${interaction.user} (${creatorBadge}) vs ${opponent} (${opponentBadge}) · **${displayName}** · **${amount}** FP each`,
     components: [acceptButton(wager.id)],
   });
 
-  // Create thread
+  // DM the opponent
   try {
-    const channel = interaction.channel;
-    if (channel && channel.type === ChannelType.GuildText) {
-      const thread = await (channel as TextChannel).threads.create({
-        name: `🎮 ${interaction.user.username} vs ${opponent.username} · ${gameName}`,
-        autoArchiveDuration: ThreadAutoArchiveDuration.OneHour,
-        type: ChannelType.PrivateThread,
-        reason: `Freeplay wager ${wager.id}`,
+    const client = (await import("./notifications.js")).getBotClient();
+    if (client) {
+      const opponentDiscord = await client.users.fetch(opponent.id);
+      await opponentDiscord.send(`🎮 **${interaction.user.username}** challenged you to a **${displayName}** freeplay match for **${amount}** FP in MATCHPOINT! Check #free-play to accept.`);
+    }
+  } catch {}
+}
+
+async function handleHost(interaction: ChatInputCommandInteraction) {
+  const gameRaw = interaction.options.getString("game", true);
+  const { franchise: game, title } = parseGameChoice(gameRaw);
+  const platform = interaction.options.getString("platform", true);
+  const amount = interaction.options.getInteger("amount", true);
+
+  // Auto-detect mode from channel name
+  const channelName = interaction.channel && "name" in interaction.channel ? (interaction.channel as any).name : "";
+  const mode: "real" | "freeplay" = channelName === "free-play" ? "freeplay" : "real";
+
+  const gameMode = interaction.options.getString("game_mode") ?? undefined;
+  const teamSize = interaction.options.getString("team_size") ?? undefined;
+  const rulesNotes = interaction.options.getString("rules_notes") ?? undefined;
+  const roundsFormat = interaction.options.getString("rounds_format") ?? undefined;
+
+  const host = await userService.ensureUser(interaction.user.id, interaction.user.username);
+
+  // Combine title with rulesNotes if both provided
+  const combinedRulesNotes = [title, rulesNotes].filter(Boolean).join(" | ") || undefined;
+
+  const wager = await lobbyService.createLobby({
+    hostId: host.id,
+    game,
+    platform,
+    amount,
+    mode,
+    gameMode,
+    teamSize,
+    rulesNotes: combinedRulesNotes,
+    roundsFormat,
+    guildId: interaction.guildId ?? undefined,
+  });
+
+  // Build the lobby embed
+  const hostRep = await reputationService.getReputation(host.id);
+  const embed = lobbyService.buildLobbyEmbed(wager, {
+    username: interaction.user.username,
+    reputation: hostRep?.reputation ?? 100,
+  }, "open");
+
+  // Build Accept Match + Cancel Lobby buttons
+  const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import("discord.js");
+  const lobbyButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`accept_lobby:${wager.id}`)
+      .setLabel("Accept Match")
+      .setStyle(ButtonStyle.Success)
+      .setEmoji("⚔️"),
+    new ButtonBuilder()
+      .setCustomId(`cancel_lobby:${wager.id}`)
+      .setLabel("Cancel Lobby")
+      .setStyle(ButtonStyle.Danger)
+      .setEmoji("❌"),
+  );
+
+  // Post to the correct channel based on mode
+  const targetChannelName = mode === "real" ? "find-match" : "free-play";
+  const { getBotClient } = await import("./notifications.js");
+  const client = getBotClient();
+
+  if (client && interaction.guildId) {
+    const guild = await client.guilds.fetch(interaction.guildId);
+    const channels = await guild.channels.fetch();
+    const targetChannel = channels.find(c => c?.isTextBased() && c.name === targetChannelName) as TextChannel | undefined;
+
+    if (targetChannel) {
+      const lobbyMessage = await targetChannel.send({
+        embeds: [embed],
+        components: [lobbyButtons],
       });
 
-      await thread.members.add(interaction.user.id);
-      await thread.members.add(opponent.id);
-      await db.update(wagers).set({ channelId: thread.id }).where(eq(wagers.id, wager.id));
-
-      const rulesBlock = profile
-        ? profile.rules.map(r => `• ${r}`).join("\n")
-        : "• Custom rules — agree before playing.";
-
-      await thread.send([
-        `🎮 **Freeplay Wager**`,
-        `${interaction.user} (${creatorBadge}) vs ${opponent} (${opponentBadge}) · **${gameName}**`,
-        `Stake: **${amount}** free coins each · Winner gets: **${amount * 2}** · No fees`,
-        ``,
-        `**Rules:**`,
-        rulesBlock,
-        ``,
-        `${opponent}, hit **Accept Wager** above to accept.`,
-      ].join("\n"));
+      // Store lobbyMessageId and lobbyChannelId on the wager record
+      await db.update(wagers)
+        .set({ lobbyMessageId: lobbyMessage.id, lobbyChannelId: targetChannel.id })
+        .where(eq(wagers.id, wager.id));
     }
-  } catch (err) {
-    console.error("[Thread] Failed to create freeplay thread:", err);
   }
+
+  const profile = getGameProfile(game);
+  const gameName = profile?.name ?? game.toUpperCase();
+  const displayName = title ? `${gameName} — ${title}` : gameName;
+  await interaction.editReply({
+    content: `✅ Lobby posted in #${targetChannelName}! **${displayName}** · **${amount}** ${mode === "real" ? "MP" : "FP"}`,
+  });
+}
+
+async function handleLookup(interaction: ChatInputCommandInteraction) {
+  const wagerId = interaction.options.getString("wager_id", true);
+  const wager = await wagerService.getWager(wagerId);
+  if (!wager) return interaction.editReply({ content: "Wager not found." });
+
+  const profile = getGameProfile(wager.game);
+  const gameName = profile?.name ?? wager.game.toUpperCase();
+  const isFreeplay = wager.mode === "freeplay";
+  const currency = isFreeplay ? "FP" : "MP";
+
+  // Get player names
+  const [creator] = await db.select().from(users).where(eq(users.id, wager.creatorId));
+  const creatorName = creator?.username ?? "Unknown";
+  let opponentName = "—";
+  if (wager.opponentId) {
+    const [opponent] = await db.select().from(users).where(eq(users.id, wager.opponentId));
+    opponentName = opponent?.username ?? "Unknown";
+  }
+
+  // Winner
+  let winnerName = "—";
+  if (wager.winnerId) {
+    const [winner] = await db.select().from(users).where(eq(users.id, wager.winnerId));
+    winnerName = winner?.username ?? "Unknown";
+  }
+
+  // Status icon
+  const statusIcon = wager.status === "settled" ? "✅"
+    : wager.status === "active" ? "⏳"
+    : wager.status === "disputed" ? "⚠️"
+    : wager.status === "cancelled" ? "🚫"
+    : wager.status === "expired" ? "⏰"
+    : "📋";
+
+  // Thread link
+  let threadLink = "";
+  if (wager.channelId && wager.guildId) {
+    threadLink = `\n🔗 [Open Thread](https://discord.com/channels/${wager.guildId}/${wager.channelId})`;
+  }
+
+  // Lobby card link
+  let lobbyLink = "";
+  if (wager.lobbyMessageId && wager.lobbyChannelId && wager.guildId) {
+    lobbyLink = `\n📋 [Lobby Card](https://discord.com/channels/${wager.guildId}/${wager.lobbyChannelId}/${wager.lobbyMessageId})`;
+  }
+
+  // Timestamps
+  const created = `<t:${Math.floor(wager.createdAt.getTime() / 1000)}:f>`;
+  const settled = wager.settledAt ? `<t:${Math.floor(wager.settledAt.getTime() / 1000)}:f>` : "—";
+
+  const lines = [
+    `${statusIcon} **Wager Lookup** · \`${wagerId}\``,
+    ``,
+    `**Game:** ${gameName}${wager.platform ? ` · ${wager.platform}` : ""}`,
+    `**Mode:** ${isFreeplay ? "🎮 Freeplay" : "💰 Real"}`,
+    `**Amount:** ${wager.amount} ${currency} each`,
+    `**Status:** ${wager.status}`,
+    ``,
+    `**Host:** ${creatorName}`,
+    `**Opponent:** ${opponentName}`,
+    `**Winner:** ${winnerName}`,
+    ``,
+    `**Created:** ${created}`,
+    `**Settled:** ${settled}`,
+  ];
+
+  if (wager.gameMode) lines.push(`**Game Mode:** ${wager.gameMode}`);
+  if (wager.roundsFormat) lines.push(`**Rounds:** ${wager.roundsFormat}`);
+  if (wager.rulesNotes) lines.push(`**Custom Rules:** ${wager.rulesNotes}`);
+
+  lines.push(threadLink);
+  lines.push(lobbyLink);
+
+  await interaction.editReply({ content: lines.filter(Boolean).join("\n") });
 }

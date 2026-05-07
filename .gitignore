@@ -1,7 +1,10 @@
 node_modules
 dist
 .env
+scripts/.env
+web/.env
 drizzle
 *.png
+*.mp4
 web/.next
 web/node_modules

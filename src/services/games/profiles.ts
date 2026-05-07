@@ -2,6 +2,8 @@
 export interface GameProfile {
   key: string;
   name: string;
+  subGames?: string[];             // specific titles within the franchise
+  thumbnailUrl?: string;           // small cover art for Discord embeds
   rules: string[];
   matchDurationMinutes: number;
   verificationMethod: "api" | "screenshot" | "manual";
@@ -14,6 +16,8 @@ export const gameProfiles: Record<string, GameProfile> = {
   fifa: {
     key: "fifa",
     name: "FIFA / EA FC",
+    subGames: ["EA FC 25", "EA FC 24", "FIFA 23", "FIFA 22"],
+    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/2195250/capsule_231x87.jpg",
     rules: [
       "Mode: Online Friendlies",
       "Half Length: 6 minutes",
@@ -36,6 +40,7 @@ Respond ONLY with valid JSON matching this format. If you cannot read the score,
   lol: {
     key: "lol",
     name: "League of Legends",
+    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/1085660/capsule_231x87.jpg",
     rules: [
       "Mode: Custom Game, Summoner's Rift",
       "Format: 1v1 — First Blood, 100 CS, or First Tower",
@@ -55,6 +60,7 @@ Respond ONLY with valid JSON. If unreadable, respond with {"error": "unreadable"
   valorant: {
     key: "valorant",
     name: "Valorant",
+    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/2215430/capsule_231x87.jpg",
     rules: [
       "Mode: Custom Game",
       "Map: Agreed before match",
@@ -75,6 +81,7 @@ Respond ONLY with valid JSON. If unreadable, respond with {"error": "unreadable"
   rocketleague: {
     key: "rocketleague",
     name: "Rocket League",
+    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/252950/capsule_231x87.jpg",
     rules: [
       "Mode: Private Match",
       "Match Length: 5 minutes",
@@ -93,6 +100,8 @@ Respond ONLY with valid JSON. If unreadable, respond with {"error": "unreadable"
   cod: {
     key: "cod",
     name: "Call of Duty",
+    subGames: ["Black Ops 6", "MW3 (2023)", "MW2 (2022)", "Warzone", "Cold War", "Black Ops 3", "Black Ops 2"],
+    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/2519060/capsule_231x87.jpg",
     rules: [
       "Mode: 1v1 Private Match",
       "Map: Agreed before match",
@@ -111,6 +120,7 @@ Respond ONLY with valid JSON. If unreadable, respond with {"error": "unreadable"
   fortnite: {
     key: "fortnite",
     name: "Fortnite",
+    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/1172470/capsule_231x87.jpg",
     rules: [
       "Mode: 1v1 Creative (Box Fight or Zone Wars)",
       "Format: First to 5 kills or Best of 5 rounds",
@@ -123,6 +133,70 @@ Respond ONLY with valid JSON. If unreadable, respond with {"error": "unreadable"
 - player1_score: their kills or round wins (integer)
 - player2_name: second player name
 - player2_score: their kills or round wins (integer)
+Respond ONLY with valid JSON. If unreadable, respond with {"error": "unreadable"}.`,
+  },
+
+  nba2k: {
+    key: "nba2k",
+    name: "NBA 2K",
+    subGames: ["NBA 2K25", "NBA 2K24", "NBA 2K23"],
+    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/2708950/capsule_231x87.jpg",
+    rules: [
+      "Mode: Play Now Online or MyTeam",
+      "Quarter Length: 5 minutes",
+      "Difficulty: All-Star",
+      "Winner: Final score",
+    ],
+    matchDurationMinutes: 30,
+    verificationMethod: "screenshot",
+    screenshotPrompt: "Send a screenshot of the **final score screen** showing both teams and the score.",
+    ocrPrompt: `Analyze this NBA 2K final score screenshot. Extract:
+- home_team: the team name on the left
+- away_team: the team name on the right
+- home_score: points scored by the home team (integer)
+- away_score: points scored by the away team (integer)
+Respond ONLY with valid JSON matching this format. If you cannot read the score, respond with {"error": "unreadable"}.`,
+  },
+
+  madden: {
+    key: "madden",
+    name: "Madden NFL",
+    subGames: ["Madden 25", "Madden 24", "Madden 23"],
+    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/2583640/capsule_231x87.jpg",
+    rules: [
+      "Mode: Head to Head",
+      "Quarter Length: 5 minutes",
+      "Difficulty: All-Madden",
+      "Winner: Final score",
+    ],
+    matchDurationMinutes: 30,
+    verificationMethod: "screenshot",
+    screenshotPrompt: "Send a screenshot of the **final score screen** showing both teams and the score.",
+    ocrPrompt: `Analyze this Madden NFL final score screenshot. Extract:
+- home_team: the team name on the left
+- away_team: the team name on the right
+- home_score: points scored by the home team (integer)
+- away_score: points scored by the away team (integer)
+Respond ONLY with valid JSON matching this format. If you cannot read the score, respond with {"error": "unreadable"}.`,
+  },
+
+  mariokart: {
+    key: "mariokart",
+    name: "Mario Kart",
+    subGames: ["Mario Kart 8 Deluxe"],
+    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/601510/capsule_231x87.jpg",
+    rules: [
+      "Mode: VS Race or Battle",
+      "Items: All Items",
+      "CC: 150cc or Mirror",
+      "Format: Best of 3 races or agreed",
+    ],
+    matchDurationMinutes: 20,
+    verificationMethod: "screenshot",
+    screenshotPrompt: "Send a screenshot of the **final race results** showing positions.",
+    ocrPrompt: `Analyze this Mario Kart race results screenshot. Extract:
+- players: array of {name, position} for each player visible
+- winner: the player name in 1st place
 Respond ONLY with valid JSON. If unreadable, respond with {"error": "unreadable"}.`,
   },
 

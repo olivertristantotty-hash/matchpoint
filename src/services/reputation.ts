@@ -13,12 +13,12 @@ import { users } from "../db/schema.js";
  *
  * Betting limits scale with reputation:
  *   0-49   (Untrusted): 0 (can't wager real money)
- *   50-99  (Caution):   250 tokens max
- *   100-149 (Good):     500 tokens max
- *   150-299 (Trusted):  1,000 tokens max
- *   300-499 (Veteran):  2,500 tokens max
- *   500-999 (Elite):    5,000 tokens max
- *   1000+  (Legend):    10,000 tokens max
+ *   50-99  (Caution):   250 MP max
+ *   100-149 (Good):     500 MP max
+ *   150-299 (Trusted):  1,000 MP max
+ *   300-499 (Veteran):  2,500 MP max
+ *   500-999 (Elite):    5,000 MP max
+ *   1000+  (Legend):    10,000 MP max
  *
  * Freeplay has no limits.
  */
@@ -93,11 +93,16 @@ export class ReputationService {
     };
   }
 
-  /** Get a short display string like "⭐ 162" */
+  /** Get a short display string like "⭐ 162" for wager cards */
   getRepBadge(reputation: number): string {
     const tier = this.getTier(reputation);
     const emoji = this.getTierEmoji(tier);
     return `${emoji} ${reputation}`;
+  }
+
+  /** Get just the emoji for nicknames */
+  getRepEmoji(reputation: number): string {
+    return this.getTierEmoji(this.getTier(reputation));
   }
 
   /** Get the maximum wager amount for a given reputation */
@@ -121,7 +126,7 @@ export class ReputationService {
       return `Your reputation is too low to wager real money (${rep.reputation} rep, need 50+). Play freeplay to build your rep.`;
     }
     if (amount > max) {
-      return `Your rep (${rep.reputation}) allows a max wager of **${max}** tokens. Current tier: ${rep.tier}. Win more matches to unlock higher stakes.`;
+      return `Your rep (${rep.reputation}) allows a max wager of **${max}** MP. Current tier: ${rep.tier}. Win more matches to unlock higher stakes.`;
     }
     return null;
   }
@@ -148,7 +153,7 @@ export class ReputationService {
     return "Untrusted";
   }
 
-  /** Update a user's Discord nickname to show their rep tier */
+  /** Update a user's Discord nickname and tier role */
   private async updateNickname(userId: string) {
     try {
       const { getBotClient } = await import("../bot/notifications.js");
@@ -158,18 +163,36 @@ export class ReputationService {
       const [user] = await db.select().from(users).where(eq(users.id, userId));
       if (!user) return;
 
-      const badge = this.getRepBadge(user.reputation);
+      const tier = this.getTier(user.reputation);
+      const emoji = this.getTierEmoji(tier);
 
       // Strip any existing badge prefix from the username
-      const cleanName = user.username.replace(/^[⭐✅⚠️🚫]\s*\d+\s*/, "").trim();
-      const newNick = `${badge} ${cleanName}`;
+      const cleanName = user.username.replace(/^[👑💎🏆⭐✅⚠️🚫]\s*\d*\s*/, "").trim();
+      const newNick = `${emoji} ${cleanName}`;
 
-      // Update in all guilds the bot is in
+      const allTiers = ["Legend", "Elite", "Veteran", "Trusted", "Good", "Caution", "Untrusted"];
+
       for (const [, guild] of client.guilds.cache) {
         try {
           const member = await guild.members.fetch(user.discordId).catch(() => null);
-          if (member && member.manageable) {
+          if (!member) continue;
+
+          // Update nickname (skip if server owner — Discord won't allow it)
+          if (member.manageable) {
             await member.setNickname(newNick);
+          }
+
+          // Update tier role — remove old tier roles, add current one
+          await guild.roles.fetch();
+          for (const tierName of allTiers) {
+            const role = guild.roles.cache.find(r => r.name === tierName);
+            if (!role) continue;
+
+            if (tierName === tier) {
+              if (!member.roles.cache.has(role.id)) await member.roles.add(role);
+            } else {
+              if (member.roles.cache.has(role.id)) await member.roles.remove(role);
+            }
           }
         } catch {}
       }

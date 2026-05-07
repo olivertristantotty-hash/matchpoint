@@ -147,7 +147,7 @@ const CATEGORIES: CategoryDef[] = [
     name: "FREE PLAY",
     emoji: "🆓",
     channels: [
-      { name: "free-play", topic: "Wager free coins — no real money. Use /daily to claim coins, /freeplay to challenge someone." },
+      { name: "free-play", topic: "Wager FP — no real money. Use /daily to claim FP, /freeplay to challenge someone." },
       { name: "free-results", topic: "Freeplay match results.", botOnly: true },
     ],
   },
@@ -159,10 +159,10 @@ function getWelcomeMessage(findMatchId?: string) {
   const findMatchLink = findMatchId ? `<#${findMatchId}>` : "#find-match";
   return `**Welcome to ${SERVER_NAME}! 🎮**
 
-Challenge anyone to a match. Stake tokens. Winner takes the pot.
+Challenge anyone to a match. Stake MP. Winner takes the pot.
 
 **Get started in 30 seconds:**
-→ \`/deposit 1000\` — grab free starter tokens
+→ \`/deposit 1000\` — grab free starter MP
 → \`/wager @opponent game amount\` — challenge someone
 → \`/link\` — connect your game accounts for auto-verified results
 
@@ -177,7 +177,7 @@ const RULES_MESSAGE = `**Rules**
 
 3. **Respect deadlines.** You have 90 minutes to play and submit after a wager is accepted. No-shows get a reputation penalty.
 
-4. **No collusion.** Alternating wins with the same person to farm tokens will get both accounts banned.
+4. **No collusion.** Alternating wins with the same person to farm MP will get both accounts banned.
 
 5. **Disputes are public.** If there's a disagreement, it goes to #disputes. Mods review evidence and decide. Their call is final.
 

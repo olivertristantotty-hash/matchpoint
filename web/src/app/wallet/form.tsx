@@ -100,7 +100,7 @@ export default function DepositWithdrawForm({ available }: { available: number }
 
         {mode === "withdraw" && (
           <div style={{ color: "var(--text-muted)", fontSize: "13px", marginTop: "8px" }}>
-            Max: {available} tokens (${(available / 100).toFixed(2)})
+            Max: {available} MP (${(available / 100).toFixed(2)})
           </div>
         )}
 
@@ -121,7 +121,7 @@ export default function DepositWithdrawForm({ available }: { available: number }
             opacity: loading ? 0.6 : 1,
           }}
         >
-          {loading ? "Processing..." : mode === "deposit" ? `Deposit ${tokenAmount} tokens` : `Withdraw ${tokenAmount} tokens`}
+          {loading ? "Processing..." : mode === "deposit" ? `Deposit ${tokenAmount} MP` : `Withdraw ${tokenAmount} MP`}
         </button>
       </form>
 
@@ -149,12 +149,12 @@ export default function DepositWithdrawForm({ available }: { available: number }
           {mode === "deposit" ? (
             <>
               Deposits are processed via USDC on Base network. Send USDC to your deposit address
-              and tokens will be credited automatically. 100 tokens = $1.00 USDC.
+              and MP will be credited automatically. 100 MP = $1.00 USDC.
             </>
           ) : (
             <>
               Withdrawals are sent as USDC to your linked wallet address.
-              Processing time: usually under 5 minutes. Minimum withdrawal: 100 tokens ($1.00).
+              Processing time: usually under 5 minutes. Minimum withdrawal: 100 MP ($1.00).
             </>
           )}
         </div>

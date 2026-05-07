@@ -19,7 +19,7 @@ export function buildOnboardingMessage() {
   const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId("onboard_claim")
-      .setLabel("🎁 Claim Free Coins")
+      .setLabel("🎁 Claim Free FP")
       .setStyle(ButtonStyle.Success),
     new ButtonBuilder()
       .setCustomId("onboard_link")
@@ -87,7 +87,7 @@ async function handleOnboardClaim(interaction: ButtonInteraction) {
   const balance = await walletService.getBalance(user.id);
   await interaction.editReply({
     content: [
-      `🎁 **+${DAILY_AMOUNT} free coins!** Balance: **${balance.freeplay}** coins`,
+      `🎁 **+${DAILY_AMOUNT} FP!** Balance: **${balance.freeplay}** FP`,
       ``,
       `Now challenge someone:`,
       `• Right-click a player's name → Apps → **Freeplay Challenge**`,
@@ -128,12 +128,93 @@ async function handleOnboardHow(interaction: ButtonInteraction) {
       `5️⃣ **Collect** — if you both agree, winner gets paid instantly`,
       ``,
       `**Two modes:**`,
-      `🎮 **Free Play** — use free coins from \`/daily\`. No risk, just bragging rights.`,
-      `💰 **Real Wagers** — use real tokens. Requires a linked game account.`,
+      `🎮 **Free Play** — use free FP from \`/daily\`. No risk, just bragging rights.`,
+      `💰 **Real Wagers** — use real MP. Requires a linked game account.`,
       ``,
       `**If there's a dispute:**`,
       `Both claim they won → post evidence in the thread → mod decides. Fake results = instant permaban.`,
     ].join("\n"),
     ephemeral: true,
   });
+}
+
+// ── Setup Step Buttons (from #how-it-works) ──
+
+export async function handleSetupButton(interaction: ButtonInteraction) {
+  const action = interaction.customId;
+
+  try {
+    await interaction.deferReply({ ephemeral: true });
+
+    switch (action) {
+      case "setup_link_steam":
+        return await interaction.editReply({
+          content: [
+            `**Link your Steam account:**`,
+            `Type this command in any channel:`,
+            `\`/link platform:Steam username:YOUR_STEAM_ID\``,
+            ``,
+            `Your Steam ID is from your profile URL:`,
+            `\`steamcommunity.com/id/yourname\` → use \`yourname\``,
+            `\`steamcommunity.com/profiles/76561198...\` → use the number`,
+            ``,
+            `The bot will give you a code to put in your Steam profile summary. After you add it, click Verify.`,
+            `Make sure your Steam profile is set to **Public**.`,
+          ].join("\n"),
+        });
+
+      case "setup_link_xbox":
+        return await interaction.editReply({
+          content: [
+            `**Link your Xbox account:**`,
+            `Type this command in any channel:`,
+            `\`/link platform:Xbox username:YOUR_GAMERTAG\``,
+            ``,
+            `The bot will give you a code to put in your Xbox bio. After you add it, click Verify.`,
+          ].join("\n"),
+        });
+
+      case "setup_link_riot":
+        return await interaction.editReply({
+          content: [
+            `**Link your Riot account (LoL / Valorant):**`,
+            `\`/link platform:Riot username:YourName#TAG\``,
+            ``,
+            `This is saved but not verified. Riot OAuth coming soon.`,
+          ].join("\n"),
+        });
+
+      case "setup_link_ea":
+        return await interaction.editReply({
+          content: [
+            `**Link your EA account (FIFA / EA FC):**`,
+            `\`/link platform:EA username:YourEAID\``,
+            ``,
+            `This is saved but not verified. EA doesn't offer third-party verification.`,
+          ].join("\n"),
+        });
+
+      case "setup_link_medal":
+        return await interaction.editReply({
+          content: [
+            `**Link your Medal.tv account:**`,
+            `\`/link platform:Medal.tv username:YOUR_MEDAL_USER_ID\``,
+            ``,
+            `To find your Medal user ID:`,
+            `1. Go to medal.tv and log in`,
+            `2. Click your profile`,
+            `3. Look at the URL — it'll be like \`medal.tv/users/12345\``,
+            `4. The number is your user ID`,
+            ``,
+            `Once linked, the bot will automatically find your clips after matches.`,
+          ].join("\n"),
+        });
+
+      default:
+        await interaction.editReply({ content: "Unknown setup step." });
+    }
+  } catch (err: any) {
+    console.error("[Setup] Error:", err.message);
+    try { await interaction.editReply({ content: `Error: ${err.message}` }); } catch {}
+  }
 }

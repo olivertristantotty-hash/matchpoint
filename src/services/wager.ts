@@ -5,6 +5,7 @@ import { walletService } from "./wallet.js";
 import { antiFraudService } from "./antifraud.js";
 import { reputationService } from "./reputation.js";
 import { identityService } from "./identity.js";
+import { leaderboardService, type ModeFilter } from "./leaderboard.js";
 import { nanoid } from "nanoid";
 
 const PLATFORM_FEE_PERCENT = parseInt(process.env.PLATFORM_FEE_PERCENT || "10");
@@ -39,13 +40,13 @@ export class WagerService {
       // Check creator has funds
       const balance = await walletService.getBalance(creatorId);
       if (balance.available < amount) {
-        throw new Error(`Insufficient balance. You have ${balance.available} tokens, need ${amount}.`);
+        throw new Error(`Insufficient balance. You have ${balance.available} MP, need ${amount}.`);
       }
     } else {
       // Freeplay — check freeplay balance
       const balance = await walletService.getBalance(creatorId);
       if (balance.freeplay < amount) {
-        throw new Error(`Insufficient freeplay coins. You have ${balance.freeplay}, need ${amount}. Use /daily to get more.`);
+        throw new Error(`Insufficient freeplay FP. You have ${balance.freeplay}, need ${amount}. Use /daily to get more.`);
       }
     }
 
@@ -73,6 +74,7 @@ export class WagerService {
 
     if (mode === "real") {
       await walletService.lockEscrow(creatorId, amount, created.id);
+      await walletService.addToTotalWagered(creatorId, amount);
     } else {
       await walletService.lockFreeplayEscrow(creatorId, amount);
     }
@@ -93,13 +95,14 @@ export class WagerService {
     if (wager.mode === "real") {
       const balance = await walletService.getBalance(opponentId);
       if (balance.available < wager.amount) {
-        throw new Error(`Insufficient balance. You have ${balance.available} tokens, need ${wager.amount}.`);
+        throw new Error(`Insufficient balance. You have ${balance.available} MP, need ${wager.amount}.`);
       }
       await walletService.lockEscrow(opponentId, wager.amount, wagerId);
+      await walletService.addToTotalWagered(opponentId, wager.amount);
     } else {
       const balance = await walletService.getBalance(opponentId);
       if (balance.freeplay < wager.amount) {
-        throw new Error(`Insufficient freeplay coins. You have ${balance.freeplay}, need ${wager.amount}. Use /daily to get more.`);
+        throw new Error(`Insufficient freeplay FP. You have ${balance.freeplay}, need ${wager.amount}. Use /daily to get more.`);
       }
       await walletService.lockFreeplayEscrow(opponentId, wager.amount);
     }
@@ -234,6 +237,13 @@ export class WagerService {
         .set({ status: "settled", winnerId, settledAt: new Date() })
         .where(eq(wagers.id, wagerId));
 
+      // Update streaks (non-blocking — don't let streak failures block settlement)
+      try {
+        await leaderboardService.updateStreaks(winnerId, loserId, wager.mode as ModeFilter, wager.game);
+      } catch (err) {
+        console.error("Failed to update streaks after freeplay settlement:", err);
+      }
+
       return { status: "settled", winnerId, loserId, winnings: wager.amount * 2, fee: 0 };
     }
 
@@ -262,6 +272,13 @@ export class WagerService {
     await db.update(wagers)
       .set({ status: "settled", winnerId, settledAt: new Date() })
       .where(eq(wagers.id, wagerId));
+
+    // Update streaks (non-blocking — don't let streak failures block settlement)
+    try {
+      await leaderboardService.updateStreaks(winnerId, loserId, wager.mode as ModeFilter, wager.game);
+    } catch (err) {
+      console.error("Failed to update streaks after settlement:", err);
+    }
 
     return { status: "settled", winnerId, loserId, winnings, fee: wager.fee };
   }

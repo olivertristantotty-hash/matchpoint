@@ -60,7 +60,7 @@ export async function sendWelcomeDM(discordId: string) {
     `**Welcome to WagerBot!** 🎮`,
     ``,
     `Here's how to get started:`,
-    `→ \`/deposit 1000\` — grab free starter tokens`,
+    `→ \`/deposit 1000\` — grab free starter MP`,
     `→ \`/wager @opponent game amount\` — challenge someone`,
     `→ \`/link\` — connect your game accounts for auto-verified results`,
     ``,
@@ -80,7 +80,7 @@ export async function announceWager(
   await postToNamedChannel(guildId, "active-wagers", [
     `⚔️ **New Wager**`,
     `**${creatorName}** vs **${opponentName}**`,
-    `Game: **${game.toUpperCase()}** · Stake: **${amount}** tokens each`,
+    `Game: **${game.toUpperCase()}** · Stake: **${amount}** MP each`,
     `ID: \`${wagerId}\``,
   ].join("\n"));
 }
@@ -92,13 +92,20 @@ export async function announceResult(
   loserName: string,
   game: string,
   winnings: number,
+  wagerId?: string,
   score?: string,
+  clipUrls?: { creator?: string | null; opponent?: string | null },
 ) {
+  const clips = [];
+  if (clipUrls?.creator) clips.push(`[Clip 1](${clipUrls.creator})`);
+  if (clipUrls?.opponent) clips.push(`[Clip 2](${clipUrls.opponent})`);
+  const clipLine = clips.length > 0 ? `📎 ${clips.join(" · ")}` : "";
+
   await postToNamedChannel(guildId, "results", [
-    `🏆 **Match Result**`,
-    `<@${winnerDiscordId}> defeated **${loserName}** in **${game.toUpperCase()}**`,
+    `🏆 <@${winnerDiscordId}> beat **${loserName}** · **${game.toUpperCase()}** · **${winnings}** MP`,
+    wagerId ? `ID: \`${wagerId}\`` : "",
     score ? `Score: ${score}` : "",
-    `Winnings: **${winnings}** tokens`,
+    clipLine,
   ].filter(Boolean).join("\n"));
 }
 

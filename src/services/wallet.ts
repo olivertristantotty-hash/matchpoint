@@ -32,7 +32,7 @@ export class WalletService {
     };
   }
 
-  /** Deposit tokens (from external payment) */
+  /** Deposit MP (from external payment) */
   async deposit(userId: string, amount: number, description?: string) {
     if (amount <= 0) throw new Error("Deposit amount must be positive");
 
@@ -43,7 +43,7 @@ export class WalletService {
     await this.logTransaction(userId, "deposit", amount, undefined, description);
   }
 
-  /** Lock tokens into escrow for a wager */
+  /** Lock MP into escrow for a wager */
   async lockEscrow(userId: string, amount: number, wagerId: string) {
     const wallet = await this.getWallet(userId);
 
@@ -59,7 +59,7 @@ export class WalletService {
       })
       .where(eq(wallets.userId, userId));
 
-    await this.logTransaction(userId, "escrow_lock", -amount, wagerId, "Tokens locked for wager");
+    await this.logTransaction(userId, "escrow_lock", -amount, wagerId, "MP locked for wager");
   }
 
   /** Release escrow to winner */
@@ -90,7 +90,7 @@ export class WalletService {
     await this.logTransaction(userId, "escrow_release", 0, wagerId, "Escrow cleared after settlement");
   }
 
-  /** Refund escrowed tokens back to available */
+  /** Refund escrowed MP back to available */
   async refundEscrow(userId: string, amount: number, wagerId: string) {
     await db.update(wallets)
       .set({
@@ -103,7 +103,7 @@ export class WalletService {
     await this.logTransaction(userId, "wager_refund", amount, wagerId, "Wager refund");
   }
 
-  /** Withdraw tokens (to external payment) */
+  /** Withdraw MP (to external payment) */
   async withdraw(userId: string, amount: number, description?: string) {
     const wallet = await this.getWallet(userId);
 
@@ -120,14 +120,14 @@ export class WalletService {
 
   // ── Freeplay Currency ──
 
-  /** Add daily freeplay coins */
+  /** Add daily freeplay FP */
   async addFreeplayCoins(userId: string, amount: number) {
     await db.update(wallets)
       .set({ freeplay: sql`${wallets.freeplay} + ${amount}`, updatedAt: new Date() })
       .where(eq(wallets.userId, userId));
   }
 
-  /** Lock freeplay tokens into escrow */
+  /** Lock freeplay FP into escrow */
   async lockFreeplayEscrow(userId: string, amount: number) {
     const wallet = await this.getWallet(userId);
     if (wallet.freeplay < amount) {
@@ -182,9 +182,55 @@ export class WalletService {
     await this.logTransaction(null, "platform_fee", amount, wagerId, "Platform fee");
   }
 
+  // ── Crypto Payment Methods ──
+
+  /** Credit balance from a confirmed crypto deposit */
+  async depositFromCrypto(userId: string, tokenAmount: number, depositId: string) {
+    if (tokenAmount <= 0) throw new Error("Deposit amount must be positive");
+
+    await db.update(wallets)
+      .set({ available: sql`${wallets.available} + ${tokenAmount}`, updatedAt: new Date() })
+      .where(eq(wallets.userId, userId));
+
+    await this.logTransaction(userId, "deposit_credit", tokenAmount, undefined, `Crypto deposit ${depositId}`);
+  }
+
+  /** Deduct balance + fee for a crypto withdrawal */
+  async withdrawForCrypto(userId: string, tokenAmount: number, fee: number, withdrawalId: string) {
+    const totalDeduction = tokenAmount + fee;
+
+    await db.update(wallets)
+      .set({ available: sql`${wallets.available} - ${totalDeduction}`, updatedAt: new Date() })
+      .where(eq(wallets.userId, userId));
+
+    await this.logTransaction(userId, "withdrawal", -tokenAmount, undefined, `Crypto withdrawal ${withdrawalId}`);
+    await this.logTransaction(userId, "withdrawal_fee", -fee, undefined, `Withdrawal fee for ${withdrawalId}`);
+  }
+
+  /** Refund balance + fee for a failed crypto withdrawal */
+  async refundFailedWithdrawal(userId: string, tokenAmount: number, fee: number, withdrawalId: string) {
+    const totalRefund = tokenAmount + fee;
+
+    await db.update(wallets)
+      .set({ available: sql`${wallets.available} + ${totalRefund}`, updatedAt: new Date() })
+      .where(eq(wallets.userId, userId));
+
+    await this.logTransaction(userId, "wager_refund", totalRefund, undefined, `Refund failed withdrawal ${withdrawalId}`);
+  }
+
+  /** Atomically increment total_wagered for a user */
+  async addToTotalWagered(userId: string, amount: number) {
+    await db.update(wallets)
+      .set({
+        totalWagered: sql`${wallets.totalWagered} + ${amount}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(wallets.userId, userId));
+  }
+
   private async logTransaction(
     userId: string | null,
-    type: "deposit" | "withdrawal" | "escrow_lock" | "escrow_release" | "wager_win" | "wager_refund" | "platform_fee",
+    type: "deposit" | "withdrawal" | "escrow_lock" | "escrow_release" | "wager_win" | "wager_refund" | "platform_fee" | "deposit_credit" | "withdrawal_fee",
     amount: number,
     wagerId?: string,
     description?: string,

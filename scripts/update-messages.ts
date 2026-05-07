@@ -24,48 +24,51 @@ if (!TOKEN || !GUILD_ID) {
 
 const WELCOME = `**Welcome to MATCHPOINT** ⚔️
 
-Challenge anyone. Stake tokens. Winner takes the pot.
+Challenge anyone. Stake MP. Winner takes the pot.
 
 **🆓 Free Play — no money, just bragging rights:**
-→ \`/daily\` — claim 1,000 free coins every 24 hours
-→ \`/freeplay @opponent game amount\` — challenge someone with free coins
+→ \`/daily\` — claim 1,000 FP every 24 hours
+→ \`/freeplay @opponent game amount\` — challenge someone with FP
 
 **💰 Real Wagers — when you're ready for stakes:**
-→ \`/wager @opponent game amount\` — challenge someone with real tokens
+→ \`/wager @opponent game amount\` — challenge someone with real MP
 → Requires a linked & verified game account
 
 **Getting started:**
 → \`/link\` — connect your Steam, Xbox, or other game accounts
-→ \`/balance\` — check your tokens and free coins
+→ \`/balance\` — check your MP and FP
 → \`/reputation\` — check your trust score
 
-Head to **#free-play** to start with free coins, or **#find-match** for real wagers.`;
+Head to **#free-play** to start with FP, or **#find-match** for real wagers.`;
 
 const RULES = `**MATCHPOINT Rules**
 
 **1. Zero tolerance for fake results.**
-Submitting a fake screenshot, lying about a result, or forging evidence = **instant permanent ban**. No warnings. No appeals. Your linked game accounts will also be blacklisted.
+Fake screenshots, lying about results, or forged evidence = **instant permanent ban**. No warnings. No appeals. Linked game accounts get blacklisted.
 
-**2. Report your results.**
-After every match, both players report who won using the buttons in your wager thread. If you report first, your opponent has 15 minutes to confirm or dispute. No response = your result stands.
+**2. Always screenshot the score screen.**
+After every match, drop a screenshot of the final score in your wager thread. **No screenshot in a dispute = you lose, every time.** It takes 2 seconds — protect yourself.
 
-**3. Respect deadlines.**
-You have 90 minutes to play and report after a wager is accepted. No-shows get a reputation penalty.
+**3. Report your results.**
+Both players report who won using the buttons in the thread. Reports are blind — neither sees the other's answer. If you report first, opponent has 15 minutes. No response = your result stands.
 
-**4. No collusion.**
-Alternating wins with the same person to farm tokens = both accounts permanently banned.
+**4. Respect deadlines.**
+90 minutes to play and report. No-shows get a reputation penalty.
 
-**5. Disputes are public.**
-If there's a disagreement, it goes to #disputes. Post your evidence in the wager thread. Mods review and decide. Their call is final.
+**5. No collusion.**
+Alternating wins with the same person to farm MP = both accounts permanently banned.
 
-**6. Link your accounts.**
-Real wagers require a linked game account. Use \`/link\` to connect your Steam, Xbox, or other platform. Steam and Xbox accounts are verified — you prove you own them.
+**6. Disputes.**
+Both claim they won → dispute opens. Mod reviews the screenshots. Player without a screenshot loses. Fake screenshot = permaban.
 
-**7. One account per person.**
-Alt accounts are not allowed. If caught, all accounts get banned.
+**7. Link your accounts.**
+Real wagers require a linked game account. Use \`/link\` to connect your platform.
 
-**8. Be cool.**
-Trash talk is part of the game. Harassment, slurs, and threats are not. Zero tolerance.`;
+**8. One account per person.**
+Alt accounts = all accounts banned.
+
+**9. Be cool.**
+Trash talk is fine. Harassment is not.`;
 
 const LINK_ACCOUNTS = `**Link Your Game Accounts**
 
