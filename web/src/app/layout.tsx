@@ -49,6 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <>
                 <a href="/dashboard" style={{ color: "var(--text-muted-dark)", fontWeight: 500 }}>Dashboard</a>
                 <a href="/wallet" style={{ color: "var(--text-muted-dark)", fontWeight: 500 }}>Wallet</a>
+                <a href="/activity" style={{ color: "var(--text-muted-dark)", fontWeight: 500 }}>Activity</a>
                 <a href="/transactions" style={{ color: "var(--text-muted-dark)", fontWeight: 500 }}>History</a>
                 <a href="/api/auth/signout-direct" style={{
                   color: "var(--text-muted-dark)", fontWeight: 500, fontSize: "13px",
