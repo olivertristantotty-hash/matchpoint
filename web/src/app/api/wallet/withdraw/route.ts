@@ -244,7 +244,62 @@ export async function POST(req: NextRequest) {
   });
 
   // 8. Skip NOWPayments payout API — queue for manual processing
-  // The withdrawal stays as "pending" and you process it manually from NOWPayments dashboard
+  // Post to admin channel in Discord and stay as "pending"
+
+  // Notify admin channel
+  try {
+    const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
+    if (DISCORD_TOKEN) {
+      // Find the admin-withdrawals channel
+      const guildsRes = await fetch("https://discord.com/api/v10/users/@me/guilds", {
+        headers: { Authorization: `Bot ${DISCORD_TOKEN}` },
+      });
+      const guilds = (await guildsRes.json()) as any[];
+
+      for (const guild of guilds) {
+        const channelsRes = await fetch(`https://discord.com/api/v10/guilds/${guild.id}/channels`, {
+          headers: { Authorization: `Bot ${DISCORD_TOKEN}` },
+        });
+        const channels = (await channelsRes.json()) as any[];
+        const adminChannel = channels.find((c: any) => c.name === "admin-withdrawals" && c.type === 0);
+
+        if (adminChannel) {
+          await fetch(`https://discord.com/api/v10/channels/${adminChannel.id}/messages`, {
+            method: "POST",
+            headers: { Authorization: `Bot ${DISCORD_TOKEN}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              embeds: [{
+                title: "💸 Withdrawal Request",
+                color: 0xf39c12,
+                fields: [
+                  { name: "User", value: user.username ?? user.id, inline: true },
+                  { name: "Amount", value: `${amount} MP ($${usdValue})`, inline: true },
+                  { name: "Fee", value: `${WITHDRAWAL_FEE_TOKENS} MP`, inline: true },
+                  { name: "Send To", value: `\`${destinationAddress}\``, inline: false },
+                  { name: "Net USDC", value: `$${usdValue} USDC (Solana)`, inline: true },
+                ],
+                footer: { text: `ID: ${withdrawalId}` },
+                timestamp: new Date().toISOString(),
+              }],
+              components: [{
+                type: 1,
+                components: [{
+                  type: 2,
+                  style: 3,
+                  label: "Mark as Sent",
+                  custom_id: `withdrawal_complete:${withdrawalId}`,
+                  emoji: { name: "✅" },
+                }],
+              }],
+            }),
+          });
+          break;
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[Withdraw] Failed to notify admin channel:", err);
+  }
 
   // Save/update withdrawal address in userPaymentProfiles
   try {
