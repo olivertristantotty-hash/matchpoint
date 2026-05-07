@@ -11,6 +11,7 @@ interface ActivityItem {
   usdValue: string;
   status: string;
   createdAt: string;
+  txHash: string | null;
 }
 
 export default async function ActivityPage() {
@@ -21,6 +22,7 @@ export default async function ActivityPage() {
       tokenAmount: deposits.tokenAmount,
       usdValue: deposits.usdValue,
       status: deposits.status,
+      txHash: deposits.txHash,
       createdAt: deposits.createdAt,
     })
     .from(deposits)
@@ -35,6 +37,7 @@ export default async function ActivityPage() {
       tokenAmount: withdrawals.tokenAmount,
       usdValue: withdrawals.usdValue,
       status: withdrawals.status,
+      txHash: withdrawals.txHash,
       createdAt: withdrawals.createdAt,
     })
     .from(withdrawals)
@@ -62,6 +65,7 @@ export default async function ActivityPage() {
       usdValue: d.usdValue ?? "0",
       status: "confirmed",
       createdAt: d.createdAt.toISOString(),
+      txHash: d.txHash ?? null,
     })),
     ...recentWithdrawals.map(w => ({
       type: "withdrawal" as const,
@@ -70,6 +74,7 @@ export default async function ActivityPage() {
       usdValue: w.usdValue,
       status: w.status,
       createdAt: w.createdAt.toISOString(),
+      txHash: w.txHash ?? null,
     })),
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 30);
 
@@ -156,6 +161,19 @@ export default async function ActivityPage() {
                 textAlign: "right", minWidth: "80px",
               }}>
                 {item.type === "deposit" ? "+" : "-"}{item.amount.toLocaleString()} MP
+                {item.txHash && (
+                  <a
+                    href={`https://solscan.io/tx/${item.txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "block", fontSize: "10px", color: "var(--text-muted-dark)",
+                      fontWeight: 400, marginTop: "2px", fontFamily: "sans-serif",
+                    }}
+                  >
+                    View on Solscan ↗
+                  </a>
+                )}
               </div>
             </div>
           ))}

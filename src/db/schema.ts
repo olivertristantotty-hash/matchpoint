@@ -195,6 +195,7 @@ export const deposits = pgTable("deposits", {
   status: depositStatusEnum("status").notNull().default("pending"),
   credited: integer("credited").notNull().default(0),             // 0 = not credited, 1 = credited
   maintenanceQueued: integer("maintenance_queued").notNull().default(0),
+  txHash: text("tx_hash"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (table) => [
@@ -211,6 +212,7 @@ export const withdrawals = pgTable("withdrawals", {
   usdValue: text("usd_value").notNull(),
   destinationAddress: text("destination_address").notNull(),
   status: withdrawalStatusEnum("status").notNull().default("pending"),
+  txHash: text("tx_hash"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (table) => [

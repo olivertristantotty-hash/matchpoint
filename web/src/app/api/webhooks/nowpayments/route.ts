@@ -77,6 +77,7 @@ async function processDepositWebhook(
   const paymentId = String(payload.payment_id);
   const status = payload.payment_status as string;
   const payAddress = payload.pay_address ? String(payload.pay_address) : null;
+  const txHash = payload.payin_hash ? String(payload.payin_hash) : null;
 
   console.log(
     `[Webhook] Received: paymentId=${paymentId} status=${status} amount=${payload.outcome_amount ?? payload.price_amount}`,
@@ -199,6 +200,7 @@ async function processDepositWebhook(
           usdValue: usdValue ?? existing.usdValue,
           tokenAmount,
           credited: 1,
+          txHash: txHash ?? existing.txHash,
           updatedAt: new Date(),
         })
         .where(eq(deposits.id, existing.id));
@@ -260,6 +262,7 @@ async function processDepositWebhook(
         tokenAmount,
         status: "confirmed",
         credited: 1,
+        txHash,
       });
       await creditDeposit(userId, tokenAmount, depositId);
     }
