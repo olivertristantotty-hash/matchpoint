@@ -32,14 +32,8 @@ export const commands = [
     .addStringOption(opt => opt.setName("wager_id").setDescription("Wager ID to accept").setRequired(true)),
 
   new SlashCommandBuilder()
-    .setName("submit")
-    .setDescription("Submit your match result screenshot")
-    .addStringOption(opt => opt.setName("wager_id").setDescription("Wager ID").setRequired(true))
-    .addAttachmentOption(opt => opt.setName("screenshot").setDescription("Screenshot of the final score screen").setRequired(true)),
-
-  new SlashCommandBuilder()
     .setName("report")
-    .setDescription("Manually report your match result (fallback if screenshot fails)")
+    .setDescription("Report your match result")
     .addStringOption(opt => opt.setName("wager_id").setDescription("Wager ID").setRequired(true))
     .addStringOption(opt => opt.setName("result").setDescription("Did you win or lose?").setRequired(true)
       .addChoices(
@@ -58,8 +52,11 @@ export const commands = [
 
   new SlashCommandBuilder()
     .setName("deposit")
-    .setDescription("Get free starter MP (demo)")
-    .addIntegerOption(opt => opt.setName("amount").setDescription("Amount of MP").setRequired(true).setMinValue(1).setMaxValue(10000)),
+    .setDescription("Deposit MP — opens the wallet page"),
+
+  new SlashCommandBuilder()
+    .setName("withdraw")
+    .setDescription("Withdraw MP — opens the wallet page"),
 
   new SlashCommandBuilder()
     .setName("reputation")

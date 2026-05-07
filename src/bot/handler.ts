@@ -18,12 +18,13 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
   const { commandName } = interaction;
 
   try {
-    const ephemeralCommands = ["balance", "deposit", "cancel", "reputation", "link", "history", "submit", "report", "daily", "host", "lookup"];
+    const ephemeralCommands = ["balance", "deposit", "withdraw", "cancel", "reputation", "link", "history", "submit", "report", "daily", "host", "lookup"];
     await interaction.deferReply({ ephemeral: ephemeralCommands.includes(commandName) });
 
     switch (commandName) {
       case "balance": return await handleBalance(interaction);
       case "deposit": return await handleDeposit(interaction);
+      case "withdraw": return await handleWithdraw(interaction);
       case "wager":   return await handleWager(interaction);
       case "accept":  return await handleAccept(interaction);
       case "submit":  return await handleSubmit(interaction);
@@ -84,12 +85,14 @@ async function handleBalance(interaction: ChatInputCommandInteraction) {
 }
 
 async function handleDeposit(interaction: ChatInputCommandInteraction) {
-  const amount = interaction.options.getInteger("amount", true);
-  const user = await userService.ensureUser(interaction.user.id, interaction.user.username);
-  await walletService.deposit(user.id, amount, "Demo deposit");
-  const balance = await walletService.getBalance(user.id);
   await interaction.editReply({
-    content: `+${amount} MP. Balance: **${balance.available}**`,
+    content: `💰 **Deposit MP** — visit the wallet to get your deposit address:\n🔗 https://matchpoint-rho-ten.vercel.app/wallet\n\nSend USDC (Solana) to your deposit address. 100 MP = $1.00.`,
+  });
+}
+
+async function handleWithdraw(interaction: ChatInputCommandInteraction) {
+  await interaction.editReply({
+    content: `💸 **Withdraw MP** — visit the wallet to request a withdrawal:\n🔗 https://matchpoint-rho-ten.vercel.app/wallet\n\nMinimum: 1,000 MP ($10). Fee: 50 MP. Paid in USDC (Solana).`,
   });
 }
 
