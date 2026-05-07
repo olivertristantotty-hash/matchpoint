@@ -105,6 +105,11 @@ export async function handleButton(interaction: ButtonInteraction) {
   const [action, param] = interaction.customId.split(":");
   if (!param) return;
 
+  // Withdrawal complete uses a modal — don't defer
+  if (action === "withdrawal_complete") {
+    return await onWithdrawalComplete(interaction, param);
+  }
+
   try {
     await interaction.deferReply({ ephemeral: true });
 
@@ -121,7 +126,6 @@ export async function handleButton(interaction: ButtonInteraction) {
       case "report_win": return await onReport(interaction, param, "win");
       case "report_loss": return await onReport(interaction, param, "loss");
       case "verify_account": return await onVerifyAccount(interaction, param);
-      case "withdrawal_complete": return await onWithdrawalComplete(interaction, param);
       default:
         await interaction.editReply({ content: "Unknown action." });
     }
@@ -709,63 +713,25 @@ async function onWithdrawalComplete(interaction: ButtonInteraction, withdrawalId
   const member = interaction.member as any;
   const isAdmin = member?.permissions?.has?.("Administrator") || member?.permissions?.has?.("ModerateMembers");
   if (!isAdmin) {
-    return interaction.editReply({ content: "Only admins can mark withdrawals as sent." });
+    await interaction.reply({ content: "Only admins can mark withdrawals as sent.", ephemeral: true });
+    return;
   }
 
-  const { withdrawals } = await import("../db/schema.js");
+  const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import("discord.js");
 
-  // Update withdrawal status
-  const [withdrawal] = await db
-    .select()
-    .from(withdrawals)
-    .where(eq(withdrawals.id, withdrawalId));
+  const modal = new ModalBuilder()
+    .setCustomId(`withdrawal_modal:${withdrawalId}`)
+    .setTitle("Mark Withdrawal as Sent");
 
-  if (!withdrawal) {
-    return interaction.editReply({ content: "Withdrawal not found." });
-  }
+  const txHashInput = new TextInputBuilder()
+    .setCustomId("tx_hash")
+    .setLabel("Solana Transaction Hash")
+    .setPlaceholder("Paste the tx signature from Solscan or your wallet")
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true);
 
-  if (withdrawal.status === "completed") {
-    return interaction.editReply({ content: "Already marked as completed." });
-  }
+  const row = new ActionRowBuilder<typeof TextInputBuilder.prototype>().addComponents(txHashInput);
+  modal.addComponents(row as any);
 
-  await db.update(withdrawals)
-    .set({ status: "completed", updatedAt: new Date() })
-    .where(eq(withdrawals.id, withdrawalId));
-
-  // Update the original message to show it's done
-  try {
-    await interaction.message.edit({
-      embeds: [{
-        ...interaction.message.embeds[0]?.data,
-        title: "✅ Withdrawal Sent",
-        color: 0x27ae60,
-      }],
-      components: [], // Remove the button
-    });
-  } catch {}
-
-  // DM the user
-  try {
-    const [user] = await db.select().from(users).where(eq(users.id, withdrawal.userId));
-    if (user) {
-      const client = getBotClient();
-      if (client) {
-        const discordUser = await client.users.fetch(user.discordId);
-        await discordUser.send({
-          embeds: [{
-            title: "✅ Withdrawal Complete",
-            description: `Your withdrawal of **${withdrawal.tokenAmount} MP** ($${withdrawal.usdValue}) has been sent to your wallet.`,
-            color: 0x27ae60,
-            fields: [
-              { name: "Address", value: `\`${withdrawal.destinationAddress}\``, inline: false },
-            ],
-            footer: { text: "MATCHPOINT" },
-            timestamp: new Date().toISOString(),
-          }],
-        });
-      }
-    }
-  } catch {}
-
-  await interaction.editReply({ content: `✅ Withdrawal ${withdrawalId} marked as sent. User has been notified.` });
+  await interaction.showModal(modal);
 }

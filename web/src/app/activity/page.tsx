@@ -30,7 +30,7 @@ export default async function ActivityPage() {
     .orderBy(desc(deposits.createdAt))
     .limit(20);
 
-  // Fetch recent withdrawals (pending + completed)
+  // Fetch recent withdrawals (pending + completed only, not failed)
   const recentWithdrawals = await db
     .select({
       userId: withdrawals.userId,
@@ -41,6 +41,7 @@ export default async function ActivityPage() {
       createdAt: withdrawals.createdAt,
     })
     .from(withdrawals)
+    .where(sql`${withdrawals.status} IN ('pending', 'processing', 'completed')`)
     .orderBy(desc(withdrawals.createdAt))
     .limit(20);
 

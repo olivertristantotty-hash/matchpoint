@@ -97,6 +97,8 @@ async function main() {
           await handleAcceptRulesModal(interaction);
         } else if (id.startsWith("wager_amount:") || id.startsWith("fp_amount:")) {
           await handleAmountModal(interaction);
+        } else if (id.startsWith("withdrawal_modal:")) {
+          await handleWithdrawalModal(interaction);
         }
       }
     } catch (err: any) {
@@ -215,5 +217,83 @@ async function handleAcceptWagerLimits(interaction: any) {
   } catch (err: any) {
     console.error("[AcceptWagerLimits] Error:", err.message);
     try { await interaction.editReply({ content: "Something went wrong. Try again." }); } catch {}
+  }
+}
+
+async function handleWithdrawalModal(interaction: any) {
+  try {
+    await interaction.deferReply({ ephemeral: true });
+
+    const withdrawalId = interaction.customId.split(":")[1];
+    const txHash = interaction.fields.getTextInputValue("tx_hash").trim();
+
+    if (!txHash) {
+      return interaction.editReply({ content: "Transaction hash is required." });
+    }
+
+    const { eq } = await import("drizzle-orm");
+    const { db } = await import("../db/index.js");
+    const { withdrawals, users } = await import("../db/schema.js");
+
+    const [withdrawal] = await db.select().from(withdrawals).where(eq(withdrawals.id, withdrawalId));
+    if (!withdrawal) {
+      return interaction.editReply({ content: "Withdrawal not found." });
+    }
+    if (withdrawal.status === "completed") {
+      return interaction.editReply({ content: "Already marked as completed." });
+    }
+
+    // Update withdrawal with tx hash and mark as completed
+    await db.update(withdrawals)
+      .set({ status: "completed", txHash, updatedAt: new Date() })
+      .where(eq(withdrawals.id, withdrawalId));
+
+    // Update the original message
+    try {
+      await interaction.message.edit({
+        embeds: [{
+          ...interaction.message.embeds[0]?.data,
+          title: "✅ Withdrawal Sent",
+          color: 0x27ae60,
+          fields: [
+            ...(interaction.message.embeds[0]?.data?.fields ?? []),
+            { name: "Tx Hash", value: `[\`${txHash.slice(0, 16)}...\`](https://solscan.io/tx/${txHash})`, inline: false },
+          ],
+        }],
+        components: [],
+      });
+    } catch {}
+
+    // DM the user
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, withdrawal.userId));
+      if (user) {
+        const { getBotClient } = await import("./notifications.js");
+        const client = getBotClient();
+        if (client) {
+          const discordUser = await client.users.fetch(user.discordId);
+          await discordUser.send({
+            embeds: [{
+              title: "✅ Withdrawal Complete",
+              description: `Your withdrawal of **${withdrawal.tokenAmount} MP** ($${withdrawal.usdValue}) has been sent to your wallet.`,
+              color: 0x27ae60,
+              fields: [
+                { name: "Address", value: `\`${withdrawal.destinationAddress}\``, inline: false },
+                { name: "Transaction", value: `[View on Solscan](https://solscan.io/tx/${txHash})`, inline: false },
+              ],
+              footer: { text: "MATCHPOINT" },
+              timestamp: new Date().toISOString(),
+            }],
+          });
+        }
+      }
+    } catch {}
+
+    await interaction.editReply({
+      content: `✅ Withdrawal \`${withdrawalId}\` marked as sent.\nTx: https://solscan.io/tx/${txHash}\nUser has been notified.`,
+    });
+  } catch (err: any) {
+    console.error("[WithdrawalModal] Error:", err.message);
+    try { await interaction.editReply({ content: `Error: ${err.message}` }); } catch {}
   }
 }
