@@ -284,10 +284,18 @@ export default function LandingPage() {
               <div className="modal__step">
                 <div className="modal__step-number">2</div>
                 <div>
-                  <h3 className="modal__step-title">Challenge a Player</h3>
-                  <p className="modal__step-body">Use the Discord bot to challenge any player to a 1v1 match. Choose your game, set the stake, and both players ready up.</p>
+                  <h3 className="modal__step-title">Host or Challenge</h3>
+                  <p className="modal__step-body">Use /host to create an open lobby or /wager to challenge a specific player. Set your game, mode, stake, and rules.</p>
                 </div>
               </div>
+
+              {/* Wager embed screenshot */}
+              <div className="modal__screenshot">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/wager-embed.png" alt="Example wager lobby in Discord" className="modal__screenshot-img" />
+                <p className="modal__screenshot-caption">A live wager lobby in Discord — opponents can accept with one click.</p>
+              </div>
+
               <div className="modal__step">
                 <div className="modal__step-number">3</div>
                 <div>

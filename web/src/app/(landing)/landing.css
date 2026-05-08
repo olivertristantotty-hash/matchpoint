@@ -593,6 +593,29 @@
   line-height: 1.5;
 }
 
+/* Screenshot in How It Works */
+.modal__screenshot {
+  margin: 1rem 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal__screenshot-img {
+  width: 100%;
+  display: block;
+  border-radius: 12px 12px 0 0;
+}
+
+.modal__screenshot-caption {
+  padding: 0.625rem 0.875rem;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.03);
+  text-align: center;
+  letter-spacing: 0.03em;
+}
+
 /* ===========================
    Login Modal
    =========================== */
