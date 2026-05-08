@@ -199,6 +199,24 @@ export default function WalletActions({
                 </div>
               </div>
 
+              {/* Buy crypto with card */}
+              <div style={{ marginTop: "12px" }}>
+                <a
+                  href={`https://changelly.com/buy/usdc-sol?amount=10&to=${depositAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "block", textAlign: "center",
+                    padding: "12px", borderRadius: "8px",
+                    background: "var(--bg)", border: "1px solid var(--border)",
+                    color: "var(--green)", fontSize: "14px", fontWeight: 600,
+                    textDecoration: "none",
+                  }}
+                >
+                  Don't have crypto? Buy USDC with card via Changelly →
+                </a>
+              </div>
+
               {/* Recent Deposits */}
               {recentDeposits.length > 0 && (
                 <div style={{ marginTop: "20px" }}>
