@@ -147,7 +147,7 @@ export const commands = [
         { name: "Cross-Platform", value: "crossplay" },
       ))
     .addIntegerOption(opt => opt.setName("amount").setDescription("Amount to wager").setRequired(true).setMinValue(10))
-    .addStringOption(opt => opt.setName("game_mode").setDescription("Game mode")
+    .addStringOption(opt => opt.setName("game_mode").setDescription("Game mode").setRequired(true)
       .addChoices(
         { name: "1v1", value: "1v1" },
         { name: "2v2", value: "2v2" },
@@ -156,14 +156,14 @@ export const commands = [
         { name: "Battle Royale", value: "br" },
         { name: "Free-for-All", value: "ffa" },
       ))
-    .addStringOption(opt => opt.setName("team_size").setDescription("Team size")
+    .addStringOption(opt => opt.setName("team_size").setDescription("Team size").setRequired(true)
       .addChoices(
         { name: "Solo", value: "solo" },
         { name: "Duo", value: "duo" },
         { name: "Trio", value: "trio" },
         { name: "Squad (4)", value: "squad" },
       ))
-    .addStringOption(opt => opt.setName("rounds_format").setDescription("Rounds format")
+    .addStringOption(opt => opt.setName("rounds_format").setDescription("Rounds format").setRequired(true)
       .addChoices(
         { name: "Best of 1", value: "Bo1" },
         { name: "Best of 3", value: "Bo3" },
@@ -171,7 +171,7 @@ export const commands = [
         { name: "First to 5", value: "Ft5" },
         { name: "First to 10", value: "Ft10" },
       ))
-    .addStringOption(opt => opt.setName("rules_notes").setDescription("Custom rules or notes")),
+    .addStringOption(opt => opt.setName("rules_notes").setDescription("Custom rules or notes").setRequired(true)),
 
   // ── Lookup ──
 
