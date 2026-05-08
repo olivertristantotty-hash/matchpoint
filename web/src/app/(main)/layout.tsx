@@ -67,7 +67,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
               }}>Sign Out</a>
             </>
           ) : (
-            <a href="/api/auth/signin/discord" style={{
+            <a href="/api/auth/signin-discord" style={{
               background: "var(--accent)", color: "white",
               padding: "0.5rem 1.25rem", borderRadius: "var(--card-radius)",
               fontSize: "0.75rem", fontWeight: 600, border: "none",
