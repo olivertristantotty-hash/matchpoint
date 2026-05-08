@@ -17,7 +17,7 @@ export const gameProfiles: Record<string, GameProfile> = {
     key: "fifa",
     name: "FIFA / EA FC",
     subGames: ["EA FC 25", "EA FC 24", "FIFA 23", "FIFA 22"],
-    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/2195250/capsule_231x87.jpg",
+    thumbnailUrl: "https://images.launchbox-app.com//f8f77ab3-ad09-4a92-89ed-36ea4a5f00fd.png",
     rules: [
       "Mode: Online Friendlies",
       "Half Length: 6 minutes",
@@ -40,7 +40,7 @@ Respond ONLY with valid JSON matching this format. If you cannot read the score,
   lol: {
     key: "lol",
     name: "League of Legends",
-    thumbnailUrl: undefined,
+    thumbnailUrl: "https://images.launchbox-app.com//87d3c9a2-b559-4e0a-a35b-2e646780358e.jpg",
     rules: [
       "Mode: Custom Game, Summoner's Rift",
       "Format: 1v1 — First Blood, 100 CS, or First Tower",
@@ -60,7 +60,7 @@ Respond ONLY with valid JSON. If unreadable, respond with {"error": "unreadable"
   valorant: {
     key: "valorant",
     name: "Valorant",
-    thumbnailUrl: undefined,
+    thumbnailUrl: "https://images.launchbox-app.com//037010fc-f6bb-40ce-a5b0-03b52f410361.jpg",
     rules: [
       "Mode: Custom Game",
       "Map: Agreed before match",
@@ -81,7 +81,7 @@ Respond ONLY with valid JSON. If unreadable, respond with {"error": "unreadable"
   rocketleague: {
     key: "rocketleague",
     name: "Rocket League",
-    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/252950/capsule_231x87.jpg",
+    thumbnailUrl: "https://images.launchbox-app.com//4d604fc8-c358-4118-ad12-44143c9e5047.jpg",
     rules: [
       "Mode: Private Match",
       "Match Length: 5 minutes",
@@ -101,7 +101,7 @@ Respond ONLY with valid JSON. If unreadable, respond with {"error": "unreadable"
     key: "cod",
     name: "Call of Duty",
     subGames: ["Black Ops 6", "MW3 (2023)", "MW2 (2022)", "Warzone", "Cold War", "Black Ops 3", "Black Ops 2"],
-    thumbnailUrl: "https://cdn.cloudflare.steamstatic.com/steam/apps/2519060/capsule_231x87.jpg",
+    thumbnailUrl: "https://images.launchbox-app.com//842b0857-8c29-4304-9d03-e9798ae26a33.jpg",
     rules: [
       "Mode: 1v1 Private Match",
       "Map: Agreed before match",
@@ -120,7 +120,7 @@ Respond ONLY with valid JSON. If unreadable, respond with {"error": "unreadable"
   fortnite: {
     key: "fortnite",
     name: "Fortnite",
-    thumbnailUrl: undefined,
+    thumbnailUrl: "https://images.launchbox-app.com//6764510b-425b-482b-9522-4eaf1936a5e3.png",
     rules: [
       "Mode: 1v1 Creative (Box Fight or Zone Wars)",
       "Format: First to 5 kills or Best of 5 rounds",
@@ -140,7 +140,7 @@ Respond ONLY with valid JSON. If unreadable, respond with {"error": "unreadable"
     key: "nba2k",
     name: "NBA 2K",
     subGames: ["NBA 2K25", "NBA 2K24", "NBA 2K23"],
-    thumbnailUrl: undefined,
+    thumbnailUrl: "https://images.launchbox-app.com//e0620e2c-c22b-4572-8a83-d76dda67be49.jpg",
     rules: [
       "Mode: Play Now Online or MyTeam",
       "Quarter Length: 5 minutes",
@@ -162,7 +162,7 @@ Respond ONLY with valid JSON matching this format. If you cannot read the score,
     key: "madden",
     name: "Madden NFL",
     subGames: ["Madden 25", "Madden 24", "Madden 23"],
-    thumbnailUrl: undefined,
+    thumbnailUrl: "https://images.launchbox-app.com//fc7550a4-5e63-4efd-b2d4-8b5a7d804dcc.jpg",
     rules: [
       "Mode: Head to Head",
       "Quarter Length: 5 minutes",
@@ -184,7 +184,7 @@ Respond ONLY with valid JSON matching this format. If you cannot read the score,
     key: "mariokart",
     name: "Mario Kart",
     subGames: ["Mario Kart 8 Deluxe"],
-    thumbnailUrl: undefined,
+    thumbnailUrl: "https://images.launchbox-app.com//ce8597d3-fc3a-4a0e-8e92-9af9533d8652.jpg",
     rules: [
       "Mode: VS Race or Battle",
       "Items: All Items",
