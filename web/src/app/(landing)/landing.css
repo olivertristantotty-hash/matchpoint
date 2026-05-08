@@ -1,0 +1,767 @@
+/* ===========================
+   Intro Screen (First Load Only)
+   =========================== */
+.intro-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #0a0f28;
+}
+
+.intro-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.6s ease;
+}
+
+.intro-video--done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.intro-loader {
+  position: absolute;
+  bottom: 3rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 1001;
+}
+
+.intro-loader__text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+
+.intro-loader__bar {
+  width: 200px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.intro-loader__fill {
+  height: 100%;
+  background: var(--accent, #4a9eff);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* ===========================
+   Page Content (hidden during intro)
+   =========================== */
+.nav-bar,
+.hero__overlay,
+.content-card,
+.hero__features,
+.landing-footer {
+  opacity: 0;
+  transition: opacity 0.8s ease 0.2s;
+}
+
+.page-ready .nav-bar,
+.page-ready .hero__overlay,
+.page-ready .hero__features,
+.page-ready .landing-footer {
+  opacity: 1;
+}
+
+/* ===========================
+   Hero Section
+   =========================== */
+.hero {
+  position: relative;
+  width: 100vw;
+  height: calc(100vh - 40px); /* leave room for thin footer */
+}
+
+.hero__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+.hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 15, 40, 0.4) 0%,
+    rgba(10, 15, 40, 0.7) 100%
+  );
+  z-index: 2;
+}
+
+/* ===========================
+   Navigation Bar
+   =========================== */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 60px;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+  background: rgba(10, 15, 40, 0.3);
+}
+
+.nav-left,
+.nav-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.nav-left {
+  justify-content: flex-start;
+}
+
+.nav-right {
+  justify-content: flex-end;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  transition: color 0.2s ease;
+  font-family: inherit;
+}
+
+.nav-link:hover,
+.nav-link:focus {
+  color: #ffffff;
+  transform: none;
+}
+
+.nav-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.nav-brand {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin: 0;
+  line-height: 1;
+}
+
+.nav-cta {
+  color: var(--accent);
+}
+
+.nav-cta:hover,
+.nav-cta:focus {
+  color: #ffffff;
+}
+
+/* ===========================
+   Hero Content Container
+   =========================== */
+/* Removed — card is now positioned inline per feature */
+
+/* ===========================
+   Content Card (Frosted Glass)
+   =========================== */
+.content-card {
+  background: rgba(13, 19, 51, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 420px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.content-card--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@supports (backdrop-filter: blur(20px)) {
+  .content-card {
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+.content-card__heading {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.content-card__body {
+  font-size: 1rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.content-card__cta {
+  display: inline-block;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.content-card__cta:hover {
+  color: #ffffff;
+}
+
+/* ===========================
+   Feature Cards Row — positioned above footer
+   =========================== */
+.hero__features {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1.5rem;
+  z-index: 3;
+  will-change: transform;
+}
+
+.feature-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(13, 19, 51, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.feature-card:hover,
+.feature-card--active {
+  background: rgba(13, 19, 51, 0.85);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+.feature-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  width: 24px;
+  height: 24px;
+}
+
+.feature-card__label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ===========================
+   Landing Footer — thin strip
+   =========================== */
+.landing-footer {
+  position: relative;
+  z-index: 3;
+  background: rgba(10, 15, 40, 0.85);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.625rem 2rem;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.landing-footer__links {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.landing-footer__link {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.65rem;
+  font-weight: 500;
+  text-decoration: none;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: color 0.2s ease;
+}
+
+.landing-footer__link:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.landing-footer__divider {
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 0.65rem;
+}
+
+.landing-footer__copy {
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+}
+
+/* ===========================
+   Responsive Styles
+   =========================== */
+@media (max-width: 1439px) {
+  .content-card {
+    max-width: 380px;
+    padding: 1.5rem;
+  }
+
+  .content-card__heading {
+    font-size: 1.75rem;
+  }
+
+  .hero__features {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 1023px) {
+  .content-card {
+    max-width: 480px;
+  }
+
+  .feature-card {
+    padding: 0.5rem 1rem;
+  }
+
+  .feature-card__label {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .nav-bar {
+    padding: 0 1rem;
+  }
+
+  .nav-link--left,
+  .nav-link--right {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+  }
+
+  .nav-brand {
+    font-size: 1rem;
+  }
+
+  .content-card {
+    max-width: 100%;
+    width: calc(100% - 2rem);
+    padding: 1.5rem;
+  }
+
+  .content-card__heading {
+    font-size: 1.5rem;
+  }
+
+  .hero__features {
+    flex-direction: column;
+    align-items: center;
+    bottom: 1.5rem;
+    gap: 0.75rem;
+    width: calc(100% - 2rem);
+  }
+
+  .feature-card {
+    width: 100%;
+    max-width: 280px;
+    justify-content: center;
+  }
+
+  .landing-footer__links {
+    gap: 0.5rem;
+  }
+
+  .landing-footer__link {
+    font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .nav-bar {
+    padding: 0 0.5rem;
+  }
+
+  .nav-link--left,
+  .nav-link--right {
+    font-size: 0.6rem;
+  }
+
+  .nav-brand {
+    font-size: 0.9rem;
+  }
+
+  .content-card {
+    padding: 1rem;
+    width: calc(100% - 1.5rem);
+  }
+
+  .content-card__heading {
+    font-size: 1.25rem;
+  }
+
+  .content-card__body {
+    font-size: 0.875rem;
+  }
+
+  .hero__features {
+    bottom: 1rem;
+    gap: 0.5rem;
+    width: calc(100% - 1.5rem);
+  }
+
+  .feature-card {
+    padding: 0.5rem 1rem;
+  }
+
+  .feature-card__label {
+    font-size: 0.65rem;
+  }
+}
+
+
+/* ===========================
+   Modal Backdrop & Container
+   =========================== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  position: relative;
+  background: rgba(13, 19, 51, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 2.5rem;
+  max-width: 540px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+.modal--login {
+  max-width: 420px;
+  text-align: center;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal__close {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  line-height: 1;
+}
+
+.modal__close:hover {
+  color: #ffffff;
+  transform: none;
+}
+
+.modal__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+/* ===========================
+   How It Works Modal — Steps
+   =========================== */
+.modal__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.modal__step {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.modal__step-number {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: rgba(74, 158, 255, 0.15);
+  border: 1px solid rgba(74, 158, 255, 0.3);
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal__step-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.25rem;
+}
+
+.modal__step-body {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
+}
+
+.modal__footer {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.modal__note {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.5;
+}
+
+/* ===========================
+   Login Modal
+   =========================== */
+.login-modal__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.login-modal__icon {
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+}
+
+.login-modal__desc {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  max-width: 320px;
+}
+
+.login-modal__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  background: #5865F2;
+  color: #ffffff;
+  padding: 0.875rem 2rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: 0.03em;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.login-modal__btn:hover {
+  background: #4752c4;
+  transform: translateY(-1px);
+  color: #ffffff;
+}
+
+.login-modal__fine {
+  margin-top: 1.25rem;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.login-modal__fine a {
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.login-modal__fine a:hover {
+  color: #ffffff;
+}
+
+/* ===========================
+   Modal Responsive
+   =========================== */
+@media (max-width: 767px) {
+  .modal {
+    padding: 1.5rem;
+    max-height: 85vh;
+    border-radius: 16px;
+  }
+
+  .modal__title {
+    font-size: 1.25rem;
+  }
+
+  .modal__step-title {
+    font-size: 0.85rem;
+  }
+
+  .modal__step-body {
+    font-size: 0.75rem;
+  }
+}
+
+
+/* ===========================
+   Games Modal
+   =========================== */
+.modal--games {
+  max-width: 680px;
+}
+
+.games-modal__desc {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 1.5rem;
+  margin-top: -0.75rem;
+}
+
+.games-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.games-modal__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.games-modal__card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.games-modal__img-wrap {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.games-modal__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.games-modal__name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+@media (max-width: 767px) {
+  .games-modal__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .nav-left,
+  .nav-right {
+    gap: 0.75rem;
+  }
+
+  .nav-link {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+  }
+}
+
+@media (max-width: 375px) {
+  .games-modal__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .games-modal__name {
+    font-size: 0.6rem;
+  }
+}
