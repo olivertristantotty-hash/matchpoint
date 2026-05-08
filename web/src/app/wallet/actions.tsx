@@ -202,7 +202,7 @@ export default function WalletActions({
               {/* Buy crypto with card */}
               <div style={{ marginTop: "12px" }}>
                 <a
-                  href={`https://changelly.com/buy/usdc-sol?amount=10&to=${depositAddress}`}
+                  href="https://changelly.com/buy/usdc"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
