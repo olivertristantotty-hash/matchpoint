@@ -547,19 +547,17 @@ async function handleHost(interaction: ChatInputCommandInteraction) {
     reputation: hostRep?.reputation ?? 100,
   }, "open");
 
-  // Build Accept Match + Cancel Lobby buttons
+  // Build Accept Wager + Cancel Lobby buttons
   const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import("discord.js");
   const lobbyButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId(`accept_lobby:${wager.id}`)
-      .setLabel("Accept Match")
-      .setStyle(ButtonStyle.Success)
-      .setEmoji("⚔️"),
+      .setLabel("Accept Wager")
+      .setStyle(ButtonStyle.Success),
     new ButtonBuilder()
       .setCustomId(`cancel_lobby:${wager.id}`)
-      .setLabel("Cancel Lobby")
-      .setStyle(ButtonStyle.Danger)
-      .setEmoji("❌"),
+      .setLabel("Cancel")
+      .setStyle(ButtonStyle.Secondary),
   );
 
   // Post to the correct channel based on mode

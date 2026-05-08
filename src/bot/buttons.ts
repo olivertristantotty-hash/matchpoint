@@ -26,7 +26,7 @@ const rulesConfirmed = new Map<string, Set<string>>();
 
 export function acceptButton(wagerId: string) {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder().setCustomId(`accept:${wagerId}`).setLabel("Accept Wager").setStyle(ButtonStyle.Success).setEmoji("⚔️"),
+    new ButtonBuilder().setCustomId(`accept:${wagerId}`).setLabel("Accept Wager").setStyle(ButtonStyle.Success),
     new ButtonBuilder().setCustomId(`decline:${wagerId}`).setLabel("Decline").setStyle(ButtonStyle.Secondary),
   );
 }
