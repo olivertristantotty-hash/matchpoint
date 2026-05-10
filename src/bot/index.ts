@@ -15,9 +15,22 @@ const clientId = process.env.DISCORD_CLIENT_ID!;
 
 async function registerCommands() {
   const rest = new REST().setToken(token);
+  const guildId = process.env.GUILD_ID;
   console.log("Registering commands...");
-  await rest.put(Routes.applicationCommands(clientId), {
-    body: commands.map(c => c.toJSON()),
+
+  if (guildId) {
+    // Guild commands update instantly (no 1-hour cache)
+    await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
+      body: commands.map(c => c.toJSON()),
+    });
+    console.log("Commands registered (guild-specific, instant).");
+  } else {
+    // Fallback to global (up to 1 hour cache)
+    await rest.put(Routes.applicationCommands(clientId), {
+      body: commands.map(c => c.toJSON()),
+    });
+    console.log("Commands registered (global).");
+  }
   });
   console.log("Commands registered.");
 }
