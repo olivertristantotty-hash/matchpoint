@@ -508,51 +508,13 @@ async function handleFreeplay(interaction: ChatInputCommandInteraction) {
 }
 
 async function handleHost(interaction: ChatInputCommandInteraction) {
-  const gameRaw = interaction.options.getString("game");
+  const gameRaw = interaction.options.getString("game", true);
+  const { franchise: game, title } = parseGameChoice(gameRaw);
   const platform = interaction.options.getString("platform", true);
   const amount = interaction.options.getInteger("amount", true);
 
-  // Auto-detect game from channel name if not provided
+  // Post lobby in the current channel
   const channelName = interaction.channel && "name" in interaction.channel ? (interaction.channel as any).name : "";
-
-  let game: string;
-  let title: string | null = null;
-
-  if (gameRaw) {
-    const parsed = parseGameChoice(gameRaw);
-    game = parsed.franchise;
-    title = parsed.title;
-  } else {
-    // Detect from channel name: "•┃valorant-wagers" → "valorant", "•┃cod-freeplay" → "cod"
-    const CHANNEL_GAME_MAP: Record<string, string> = {
-      "valorant": "valorant",
-      "lol": "lol",
-      "cod": "cod",
-      "ea-fc": "fifa",
-      "fortnite": "fortnite",
-      "rocket-league": "rocketleague",
-      "nba-2k": "nba2k",
-      "madden": "madden",
-      "mario-kart": "mariokart",
-    };
-
-    let detected: string | null = null;
-    for (const [prefix, gameKey] of Object.entries(CHANNEL_GAME_MAP)) {
-      if (channelName.includes(prefix)) {
-        detected = gameKey;
-        break;
-      }
-    }
-
-    if (!detected) {
-      return interaction.editReply({
-        content: "Couldn't detect the game from this channel. Use `/host` in a game channel, or specify the `game` option.",
-      });
-    }
-    game = detected;
-  }
-
-  // Auto-detect mode from channel name
   const mode: "real" | "freeplay" = channelName.includes("freeplay") ? "freeplay" : "real";
 
   const gameMode = interaction.options.getString("game_mode") ?? undefined;
@@ -562,7 +524,6 @@ async function handleHost(interaction: ChatInputCommandInteraction) {
 
   const host = await userService.ensureUser(interaction.user.id, interaction.user.username);
 
-  // Combine title with rulesNotes if both provided
   const combinedRulesNotes = [title, rulesNotes].filter(Boolean).join(" | ") || undefined;
 
   const wager = await lobbyService.createLobby({
@@ -578,14 +539,12 @@ async function handleHost(interaction: ChatInputCommandInteraction) {
     guildId: interaction.guildId ?? undefined,
   });
 
-  // Build the lobby embed
   const hostRep = await reputationService.getReputation(host.id);
   const embed = lobbyService.buildLobbyEmbed(wager, {
     username: interaction.user.username,
     reputation: hostRep?.reputation ?? 100,
   }, "open");
 
-  // Build Accept Wager + Cancel Lobby buttons
   const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import("discord.js");
   const lobbyButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
@@ -598,13 +557,11 @@ async function handleHost(interaction: ChatInputCommandInteraction) {
       .setStyle(ButtonStyle.Secondary),
   );
 
-  // Post the lobby in the CURRENT channel (the game channel itself)
   const lobbyMessage = await interaction.channel!.send({
     embeds: [embed],
     components: [lobbyButtons],
   });
 
-  // Store lobbyMessageId and lobbyChannelId on the wager record
   await db.update(wagers)
     .set({ lobbyMessageId: lobbyMessage.id, lobbyChannelId: interaction.channelId })
     .where(eq(wagers.id, wager.id));
