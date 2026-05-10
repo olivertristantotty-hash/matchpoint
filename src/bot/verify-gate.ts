@@ -76,7 +76,12 @@ const VERIFY_WEB_URL = process.env.VERIFY_WEB_URL ?? "https://matchpoint-rho-ten
 
 /** vconnect — single Verify button, sends user a personalized OAuth link */
 export async function handleVerifyConnect(interaction: ButtonInteraction) {
-  const url = `${VERIFY_WEB_URL}/api/verify/start?state=${interaction.user.id}`;
+  // Include game selections in the state so the web callback can assign them
+  const selections = pendingGameSelections.get(interaction.user.id);
+  const games = selections ? [...selections].join(",") : "";
+  const state = `${interaction.user.id}:${games}`;
+
+  const url = `${VERIFY_WEB_URL}/api/verify/start?state=${encodeURIComponent(state)}`;
 
   await interaction.reply({
     content: [
@@ -84,7 +89,7 @@ export async function handleVerifyConnect(interaction: ButtonInteraction) {
       ``,
       `🔗 [**Verify your account**](${url})`,
       ``,
-      `This opens Discord's authorization page. We'll check if you have a gaming account (Riot, Steam, Xbox, PlayStation, Epic, Battle.net, or League of Legends) connected to your Discord.`,
+      `This opens Discord's authorization page. We'll check if you have a gaming account connected to your Discord.`,
       ``,
       `If you don't have one connected yet: **Discord Settings → Connections → link any gaming platform**, then come back and click Verify again.`,
     ].join("\n"),
@@ -491,28 +496,47 @@ export async function handleGamePick(interaction: StringSelectMenuInteraction) {
 
 // ── Game Selection Buttons (gsel:<game>) ──
 
-/** Toggles a game role on/off when user clicks a game button in #game-selection */
+// In-memory store of game selections per user (before they verify)
+const pendingGameSelections = new Map<string, Set<string>>();
+
+/** Toggles a game selection (does NOT grant the role — that happens after verify) */
 export async function handleGameSelectButton(interaction: ButtonInteraction, gameKey: string) {
   await interaction.deferReply({ ephemeral: true });
-
-  const guild = interaction.guild;
-  if (!guild) return interaction.editReply({ content: "Run this in the server." });
 
   const def = GAME_ROLES.find((g) => g.value === gameKey);
   if (!def) return interaction.editReply({ content: "Unknown game." });
 
-  await guild.roles.fetch();
-  const role = guild.roles.cache.find((r) => r.name === def.roleName);
-  if (!role) return interaction.editReply({ content: `@${def.roleName} role not found. Ask an admin.` });
+  const userId = interaction.user.id;
 
-  const member = await guild.members.fetch(interaction.user.id);
-  const hasRole = member.roles.cache.has(role.id);
-
-  if (hasRole) {
-    await member.roles.remove(role, "Game deselected");
-    await interaction.editReply({ content: `${def.emoji} **${def.label}** removed. You won't see those channels anymore.` });
-  } else {
-    await member.roles.add(role, "Game selected");
-    await interaction.editReply({ content: `${def.emoji} **${def.label}** added! After verifying, you'll see the ${def.label} channels.` });
+  if (!pendingGameSelections.has(userId)) {
+    pendingGameSelections.set(userId, new Set());
   }
+
+  const selections = pendingGameSelections.get(userId)!;
+
+  if (selections.has(gameKey)) {
+    selections.delete(gameKey);
+    await interaction.editReply({
+      content: `${def.emoji} **${def.label}** deselected.`,
+    });
+  } else {
+    selections.add(gameKey);
+    const selectedList = [...selections].map((k) => {
+      const g = GAME_ROLES.find((r) => r.value === k);
+      return g ? `${g.emoji} ${g.label}` : k;
+    }).join(", ");
+
+    await interaction.editReply({
+      content: `${def.emoji} **${def.label}** selected!\n\nYour games: ${selectedList}\n\nHead to **#verify** when you're ready.`,
+    });
+  }
+}
+
+/** Get and clear a user's pending game selections (called after verification) */
+export function getPendingGameSelections(userId: string): string[] {
+  const selections = pendingGameSelections.get(userId);
+  if (!selections) return [];
+  const result = [...selections];
+  pendingGameSelections.delete(userId);
+  return result;
 }
