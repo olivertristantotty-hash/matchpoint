@@ -31,8 +31,6 @@ async function registerCommands() {
     });
     console.log("Commands registered (global).");
   }
-  });
-  console.log("Commands registered.");
 }
 
 async function main() {
