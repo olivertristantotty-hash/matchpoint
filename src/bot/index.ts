@@ -5,7 +5,7 @@ import { handleCommand } from "./handler.js";
 import { handleButton } from "./buttons.js";
 import { handleContextMenu, handleGameSelect, handleTitleSelect, handlePlatformSelect, handleAmountModal } from "./context-menu.js";
 import { handleOnboardingButton, buildOnboardingMessage, handleSetupButton } from "./onboarding.js";
-import { handleVerifyStart, handleVerifySubmit, handleVerifyCheck, handleGamePick, handleVerifyConnect } from "./verify-gate.js";
+import { handleVerifyStart, handleVerifySubmit, handleVerifyCheck, handleGamePick, handleVerifyConnect, handleGameSelectButton } from "./verify-gate.js";
 import { setBotClient, sendWelcomeDM } from "./notifications.js";
 
 config();
@@ -78,6 +78,8 @@ async function main() {
           await handleVerifyCheck(interaction, id.split(":")[1]);
         } else if (id === "vconnect") {
           await handleVerifyConnect(interaction);
+        } else if (id.startsWith("gsel:")) {
+          await handleGameSelectButton(interaction, id.split(":")[1]);
         } else if (id === "accept_rules") {
           await handleAcceptRules(interaction);
         } else if (id === "accept_wager_limits") {

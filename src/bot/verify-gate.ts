@@ -488,3 +488,31 @@ export async function handleGamePick(interaction: StringSelectMenuInteraction) {
     });
   } catch {}
 }
+
+// ── Game Selection Buttons (gsel:<game>) ──
+
+/** Toggles a game role on/off when user clicks a game button in #game-selection */
+export async function handleGameSelectButton(interaction: ButtonInteraction, gameKey: string) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const guild = interaction.guild;
+  if (!guild) return interaction.editReply({ content: "Run this in the server." });
+
+  const def = GAME_ROLES.find((g) => g.value === gameKey);
+  if (!def) return interaction.editReply({ content: "Unknown game." });
+
+  await guild.roles.fetch();
+  const role = guild.roles.cache.find((r) => r.name === def.roleName);
+  if (!role) return interaction.editReply({ content: `@${def.roleName} role not found. Ask an admin.` });
+
+  const member = await guild.members.fetch(interaction.user.id);
+  const hasRole = member.roles.cache.has(role.id);
+
+  if (hasRole) {
+    await member.roles.remove(role, "Game deselected");
+    await interaction.editReply({ content: `${def.emoji} **${def.label}** removed. You won't see those channels anymore.` });
+  } else {
+    await member.roles.add(role, "Game selected");
+    await interaction.editReply({ content: `${def.emoji} **${def.label}** added! After verifying, you'll see the ${def.label} channels.` });
+  }
+}

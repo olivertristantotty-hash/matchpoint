@@ -12,7 +12,9 @@
     "test": "vitest --run",
     "setup:onboarding": "tsx scripts/setup-onboarding.ts",
     "setup:verify": "tsx scripts/setup-verify-gate.ts",
-    "setup:emojis": "tsx scripts/upload-platform-emojis.ts"
+    "setup:emojis": "tsx scripts/upload-platform-emojis.ts",
+    "setup:game-emojis": "tsx scripts/upload-game-emojis.ts",
+    "setup:game-selection": "tsx scripts/setup-game-selection.ts"
   },
   "dependencies": {
     "discord.js": "^14.16.3",
