@@ -119,13 +119,12 @@ async function main() {
     }
   });
 
-  // Welcome DM with onboarding buttons when someone joins
+  // Welcome DM with simple message when someone joins
   client.on("guildMemberAdd", async (member) => {
     if (member.user.bot) return;
     try {
-      const user = await member.user.createDM();
-      const msg = buildOnboardingMessage();
-      await user.send(msg);
+      const dm = await member.user.createDM();
+      await dm.send(`Welcome to **MATCHPOINT** ⚔️\n\nPlease head over to **#verify** to begin using the server.`);
     } catch (err) {
       console.error("[Onboarding] Failed to DM:", err);
     }

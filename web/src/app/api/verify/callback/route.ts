@@ -29,11 +29,7 @@ const ACCEPTED_PLATFORMS = new Set([
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
-  const rawState = req.nextUrl.searchParams.get("state") ?? "";
-
-  // State format: "discordUserId:game1,game2,game3" or just "discordUserId"
-  const [discordUserId, gamesStr] = rawState.split(":");
-  const selectedGames = gamesStr ? gamesStr.split(",").filter(Boolean) : [];
+  const discordUserId = req.nextUrl.searchParams.get("state") ?? "";
 
   if (!code || !discordUserId) {
     return renderResult(false, "Missing authorization code or state. Try again from Discord.");
@@ -144,16 +140,14 @@ export async function GET(req: NextRequest) {
     });
   } catch {}
 
-  return renderResult(true, `Verified! Found: ${linkedNames}`, discordUserId, selectedGames);
+  return renderResult(true, `Verified! Found: ${linkedNames}`, discordUserId);
 }
 
-function renderResult(success: boolean, message: string, discordUserId?: string, games?: string[]) {
+function renderResult(success: boolean, message: string, discordUserId?: string) {
   const color = success ? "#2ECC71" : "#E74C3C";
   const icon = success ? "✅" : "❌";
   const title = success ? "Verification Complete" : "Verification Failed";
-  const gamesParam = games && games.length > 0 ? `&games=${games.join(",")}` : "";
 
-  // Simple HTML page that tells the user the result and they can close the tab
   const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -192,10 +186,10 @@ function renderResult(success: boolean, message: string, discordUserId?: string,
     <div class="icon">${icon}</div>
     <h1>${title}</h1>
     <p>${message.replace(/\n/g, "<br>")}</p>
-    ${success ? `<div class="grant-note">Go back to Discord — your game channels will appear within seconds.</div>` : ""}
+    ${success ? `<div class="grant-note">Go back to Discord — select your games in #game-selection to see the wager channels.</div>` : ""}
     <p class="note">You can close this tab.</p>
   </div>
-  ${success && discordUserId ? `<script>fetch('/api/verify/grant?user=${discordUserId}${gamesParam}').catch(()=>{})</script>` : ""}
+  ${success && discordUserId ? `<script>fetch('/api/verify/grant?user=${discordUserId}').catch(()=>{})</script>` : ""}
 </body>
 </html>`;
 

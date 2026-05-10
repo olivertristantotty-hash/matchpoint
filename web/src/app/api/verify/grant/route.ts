@@ -11,8 +11,6 @@ const GUILD_ID = process.env.GUILD_ID ?? "";
 
 export async function GET(req: NextRequest) {
   const discordUserId = req.nextUrl.searchParams.get("user");
-  const gamesParam = req.nextUrl.searchParams.get("games") ?? "";
-  const selectedGames = gamesParam.split(",").filter(Boolean);
 
   if (!discordUserId) {
     return NextResponse.json({ error: "Missing user" }, { status: 400 });
@@ -56,28 +54,6 @@ export async function GET(req: NextRequest) {
         {
           method: "PUT",
           headers: { Authorization: `Bot ${BOT_TOKEN}`, "X-Audit-Log-Reason": "Default tier on verification" },
-        },
-      );
-    }
-
-    // Grant game roles
-    const GAME_ROLE_MAP: Record<string, string> = {
-      valorant: "Valorant", lol: "LoL", cod: "Call of Duty", fifa: "EA FC",
-      fortnite: "Fortnite", rocketleague: "Rocket League", nba2k: "NBA 2K",
-      madden: "Madden", mariokart: "Mario Kart",
-    };
-
-    for (const gameKey of selectedGames) {
-      const roleName = GAME_ROLE_MAP[gameKey];
-      if (!roleName) continue;
-      const gameRole = roles.find((r) => r.name === roleName);
-      if (!gameRole) continue;
-
-      await fetch(
-        `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${discordUserId}/roles/${gameRole.id}`,
-        {
-          method: "PUT",
-          headers: { Authorization: `Bot ${BOT_TOKEN}`, "X-Audit-Log-Reason": `Game selected: ${roleName}` },
         },
       );
     }
