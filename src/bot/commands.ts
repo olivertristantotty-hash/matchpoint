@@ -137,7 +137,7 @@ export const commands = [
   new SlashCommandBuilder()
     .setName("host")
     .setDescription("Host an open wager lobby")
-    .addStringOption(opt => opt.setName("game").setDescription("Game to play").setRequired(true)
+    .addStringOption(opt => opt.setName("game").setDescription("Game (auto-detected from channel)")
       .addChoices(...GAME_CHOICES))
     .addStringOption(opt => opt.setName("platform").setDescription("Platform").setRequired(true)
       .addChoices(
@@ -171,7 +171,7 @@ export const commands = [
         { name: "First to 5", value: "Ft5" },
         { name: "First to 10", value: "Ft10" },
       ))
-    .addStringOption(opt => opt.setName("rules_notes").setDescription("Custom rules or notes").setRequired(true)),
+    .addStringOption(opt => opt.setName("rules_notes").setDescription("Custom rules or notes")),
 
   // ── Lookup ──
 

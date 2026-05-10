@@ -508,14 +508,52 @@ async function handleFreeplay(interaction: ChatInputCommandInteraction) {
 }
 
 async function handleHost(interaction: ChatInputCommandInteraction) {
-  const gameRaw = interaction.options.getString("game", true);
-  const { franchise: game, title } = parseGameChoice(gameRaw);
+  const gameRaw = interaction.options.getString("game");
   const platform = interaction.options.getString("platform", true);
   const amount = interaction.options.getInteger("amount", true);
 
-  // Auto-detect mode from channel name
+  // Auto-detect game from channel name if not provided
   const channelName = interaction.channel && "name" in interaction.channel ? (interaction.channel as any).name : "";
-  const mode: "real" | "freeplay" = channelName === "free-play" ? "freeplay" : "real";
+
+  let game: string;
+  let title: string | null = null;
+
+  if (gameRaw) {
+    const parsed = parseGameChoice(gameRaw);
+    game = parsed.franchise;
+    title = parsed.title;
+  } else {
+    // Detect from channel name: "•┃valorant-wagers" → "valorant", "•┃cod-freeplay" → "cod"
+    const CHANNEL_GAME_MAP: Record<string, string> = {
+      "valorant": "valorant",
+      "lol": "lol",
+      "cod": "cod",
+      "ea-fc": "fifa",
+      "fortnite": "fortnite",
+      "rocket-league": "rocketleague",
+      "nba-2k": "nba2k",
+      "madden": "madden",
+      "mario-kart": "mariokart",
+    };
+
+    let detected: string | null = null;
+    for (const [prefix, gameKey] of Object.entries(CHANNEL_GAME_MAP)) {
+      if (channelName.includes(prefix)) {
+        detected = gameKey;
+        break;
+      }
+    }
+
+    if (!detected) {
+      return interaction.editReply({
+        content: "Couldn't detect the game from this channel. Use `/host` in a game channel, or specify the `game` option.",
+      });
+    }
+    game = detected;
+  }
+
+  // Auto-detect mode from channel name
+  const mode: "real" | "freeplay" = channelName.includes("freeplay") ? "freeplay" : "real";
 
   const gameMode = interaction.options.getString("game_mode") ?? undefined;
   const teamSize = interaction.options.getString("team_size") ?? undefined;
@@ -560,34 +598,22 @@ async function handleHost(interaction: ChatInputCommandInteraction) {
       .setStyle(ButtonStyle.Secondary),
   );
 
-  // Post to the correct channel based on mode
-  const targetChannelName = mode === "real" ? "find-match" : "free-play";
-  const { getBotClient } = await import("./notifications.js");
-  const client = getBotClient();
+  // Post the lobby in the CURRENT channel (the game channel itself)
+  const lobbyMessage = await interaction.channel!.send({
+    embeds: [embed],
+    components: [lobbyButtons],
+  });
 
-  if (client && interaction.guildId) {
-    const guild = await client.guilds.fetch(interaction.guildId);
-    const channels = await guild.channels.fetch();
-    const targetChannel = channels.find(c => c?.isTextBased() && c.name === targetChannelName) as TextChannel | undefined;
-
-    if (targetChannel) {
-      const lobbyMessage = await targetChannel.send({
-        embeds: [embed],
-        components: [lobbyButtons],
-      });
-
-      // Store lobbyMessageId and lobbyChannelId on the wager record
-      await db.update(wagers)
-        .set({ lobbyMessageId: lobbyMessage.id, lobbyChannelId: targetChannel.id })
-        .where(eq(wagers.id, wager.id));
-    }
-  }
+  // Store lobbyMessageId and lobbyChannelId on the wager record
+  await db.update(wagers)
+    .set({ lobbyMessageId: lobbyMessage.id, lobbyChannelId: interaction.channelId })
+    .where(eq(wagers.id, wager.id));
 
   const profile = getGameProfile(game);
   const gameName = profile?.name ?? game.toUpperCase();
   const displayName = title ? `${gameName} — ${title}` : gameName;
   await interaction.editReply({
-    content: `✅ Lobby posted in #${targetChannelName}! **${displayName}** · **${amount}** ${mode === "real" ? "MP" : "FP"}`,
+    content: `✅ Lobby posted! **${displayName}** · **${amount}** ${mode === "real" ? "MP" : "FP"}`,
   });
 }
 
