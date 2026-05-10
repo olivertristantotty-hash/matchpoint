@@ -72,6 +72,26 @@ const PLATFORM_DISPLAY: Record<string, { name: string; usernameHint: string }> =
   epic:        { name: "Epic Games",  usernameHint: "Your Epic display name" },
 };
 
+const VERIFY_WEB_URL = process.env.VERIFY_WEB_URL ?? "https://matchpoint-rho-ten.vercel.app";
+
+/** vconnect — single Verify button, sends user a personalized OAuth link */
+export async function handleVerifyConnect(interaction: ButtonInteraction) {
+  const url = `${VERIFY_WEB_URL}/api/verify/start?state=${interaction.user.id}`;
+
+  await interaction.reply({
+    content: [
+      `**Click the link below to verify:**`,
+      ``,
+      `🔗 [**Verify your account**](${url})`,
+      ``,
+      `This opens Discord's authorization page. We'll check if you have a gaming account (Riot, Steam, Xbox, PlayStation, Epic, Battle.net, or League of Legends) connected to your Discord.`,
+      ``,
+      `If you don't have one connected yet: **Discord Settings → Connections → link any gaming platform**, then come back and click Verify again.`,
+    ].join("\n"),
+    ephemeral: true,
+  });
+}
+
 /** vstart:<platform> — opens the modal */
 export async function handleVerifyStart(interaction: ButtonInteraction, platform: string) {
   const meta = PLATFORM_DISPLAY[platform];

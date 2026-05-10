@@ -368,45 +368,42 @@ async function main() {
     .setTitle("Welcome to MATCHPOINT")
     .setDescription(
       [
-        "**Link a platform account to unlock the server.**",
+        "**Link a gaming account to unlock the server.**",
         "",
-        "Click a platform below and follow the prompts. Once verified, you get the `@Verified` role and the full server opens up.",
+        "Click **Verify** below — it'll open a quick Discord authorization page.",
+        "We check if you have any of these connected to your Discord:",
         "",
-        "Steam and Xbox are cryptographically verified. Riot, PlayStation, and Activision are saved on trust for now.",
+        "• Riot Games",
+        "• League of Legends",
+        "• Steam",
+        "• Xbox",
+        "• PlayStation",
+        "• Epic Games",
+        "• Battle.net",
+        "",
+        "If you don't have one connected yet, go to **Discord Settings → Connections** and link any gaming platform first, then come back and click Verify.",
+        "",
+        "That's it — one click and you're in.",
       ].join("\n"),
     )
     .setColor(0xD35400)
-    .setFooter({ text: "We only check that you own the account. Nothing is shared." });
+    .setFooter({ text: "We only check that a gaming account exists. Nothing is shared or stored beyond your username." });
 
-  // Discord caps a button row at 5 — split into two rows
-  const makeButton = (b: typeof PLATFORM_BUTTONS[number]) => {
-    const btn = new ButtonBuilder()
-      .setCustomId(`vstart:${b.platform}`)
-      .setLabel(b.label)
-      .setStyle(b.style);
-    const customEmojiId = platformEmojiIds[b.platform];
-    if (customEmojiId) {
-      btn.setEmoji({ id: customEmojiId });
-    } else {
-      btn.setEmoji(FALLBACK_EMOJI[b.platform] ?? "•");
-    }
-    return btn;
-  };
-
-  const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    ...PLATFORM_BUTTONS.slice(0, 5).map(makeButton),
+  // Single URL button — opens the OAuth flow in the user's browser.
+  // We use a Link button (no customId needed, opens a URL directly).
+  // The state param carries the user's Discord ID so the callback knows who to verify.
+  // Problem: Link buttons can't have dynamic per-user URLs.
+  // Solution: Use a regular button that the bot handles by replying with the personalized link.
+  const verifyButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId("vconnect")
+      .setLabel("Verify")
+      .setEmoji("✅")
+      .setStyle(ButtonStyle.Success),
   );
-  const rowsComponents: ActionRowBuilder<ButtonBuilder>[] = [row1];
-  if (PLATFORM_BUTTONS.length > 5) {
-    const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      ...PLATFORM_BUTTONS.slice(5).map(makeButton),
-    );
-    rowsComponents.push(row2);
-  }
 
-  await verifyChannel.send({ embeds: [embed], components: rowsComponents });
-  const usingCustom = Object.keys(platformEmojiIds).length > 0;
-  console.log(`  ✓  Posted verify embed (${usingCustom ? "custom platform logos" : "fallback emoji — run npm run setup:emojis to upload real logos"})`);
+  await verifyChannel.send({ embeds: [embed], components: [verifyButton] });
+  console.log(`  ✓  Posted verify embed with connection-check button`);
 
   // ── Summary ──
 
