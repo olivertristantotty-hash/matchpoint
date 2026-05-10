@@ -368,32 +368,40 @@ async function main() {
     .setTitle("Welcome to MATCHPOINT")
     .setDescription(
       [
-        "**Link a gaming account to unlock the server.**",
+        "**1. Select the games you play**",
+        "**2. Click Verify to link your gaming account**",
         "",
-        "Click **Verify** below — it'll open a quick Discord authorization page.",
-        "We check if you have any of these connected to your Discord:",
+        "We'll check if you have any of these connected to your Discord: Riot Games, League of Legends, Steam, Xbox, PlayStation, Epic Games, or Battle.net.",
         "",
-        "• Riot Games",
-        "• League of Legends",
-        "• Steam",
-        "• Xbox",
-        "• PlayStation",
-        "• Epic Games",
-        "• Battle.net",
-        "",
-        "If you don't have one connected yet, go to **Discord Settings → Connections** and link any gaming platform first, then come back and click Verify.",
-        "",
-        "That's it — one click and you're in.",
+        "If you don't have one connected yet, go to **Discord Settings → Connections** and link any gaming platform first.",
       ].join("\n"),
     )
     .setColor(0xD35400)
-    .setFooter({ text: "We only check that a gaming account exists. Nothing is shared or stored beyond your username." });
+    .setFooter({ text: "We only check that a gaming account exists. Nothing is shared." });
 
-  // Single URL button — opens the OAuth flow in the user's browser.
-  // We use a Link button (no customId needed, opens a URL directly).
-  // The state param carries the user's Discord ID so the callback knows who to verify.
-  // Problem: Link buttons can't have dynamic per-user URLs.
-  // Solution: Use a regular button that the bot handles by replying with the personalized link.
+  // Game picker (StringSelectMenu)
+  const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = await import("discord.js");
+
+  const gameSelect = new StringSelectMenuBuilder()
+    .setCustomId("vgame_pick")
+    .setPlaceholder("Select games you play…")
+    .setMinValues(1)
+    .setMaxValues(9)
+    .addOptions(
+      new StringSelectMenuOptionBuilder().setLabel("Valorant").setValue("valorant").setDescription("Riot 1v1 customs").setEmoji("🎯"),
+      new StringSelectMenuOptionBuilder().setLabel("League of Legends").setValue("lol").setDescription("Summoner's Rift 1v1").setEmoji("🗡️"),
+      new StringSelectMenuOptionBuilder().setLabel("Call of Duty").setValue("cod").setDescription("BO6, MW3, Warzone").setEmoji("🔫"),
+      new StringSelectMenuOptionBuilder().setLabel("EA FC / FIFA").setValue("fifa").setDescription("Online Friendlies").setEmoji("⚽"),
+      new StringSelectMenuOptionBuilder().setLabel("Fortnite").setValue("fortnite").setDescription("Box Fight / Zone Wars").setEmoji("🏆"),
+      new StringSelectMenuOptionBuilder().setLabel("Rocket League").setValue("rocketleague").setDescription("Private match 1v1").setEmoji("🚗"),
+      new StringSelectMenuOptionBuilder().setLabel("NBA 2K").setValue("nba2k").setDescription("Play Now Online").setEmoji("🏀"),
+      new StringSelectMenuOptionBuilder().setLabel("Madden NFL").setValue("madden").setDescription("Head to Head").setEmoji("🏈"),
+      new StringSelectMenuOptionBuilder().setLabel("Mario Kart").setValue("mariokart").setDescription("VS Race").setEmoji("🏁"),
+    );
+
+  const gameRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(gameSelect);
+
+  // Verify button
   const verifyButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId("vconnect")
@@ -402,8 +410,8 @@ async function main() {
       .setStyle(ButtonStyle.Success),
   );
 
-  await verifyChannel.send({ embeds: [embed], components: [verifyButton] });
-  console.log(`  ✓  Posted verify embed with connection-check button`);
+  await verifyChannel.send({ embeds: [embed], components: [gameRow, verifyButton] });
+  console.log(`  ✓  Posted verify embed with game picker + verify button`);
 
   // ── Summary ──
 
