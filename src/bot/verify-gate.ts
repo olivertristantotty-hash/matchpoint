@@ -20,6 +20,9 @@ import {
   ButtonStyle,
   ModalBuilder,
   ModalSubmitInteraction,
+  StringSelectMenuBuilder,
+  StringSelectMenuInteraction,
+  StringSelectMenuOptionBuilder,
   TextInputBuilder,
   TextInputStyle,
 } from "discord.js";
@@ -39,6 +42,20 @@ import { identityService } from "../services/identity.js";
 import { assignPlatformRole } from "./buttons.js";
 
 const VERIFIED_ROLE_NAME = "Verified";
+
+// Games mapping — role name to pick from, emoji for the menu.
+// Role names must match what setup-onboarding.ts created.
+const GAME_ROLES: { value: string; roleName: string; label: string; emoji: string; description: string }[] = [
+  { value: "valorant",     roleName: "Valorant",      label: "Valorant",          emoji: "🎯", description: "Riot 1v1 customs" },
+  { value: "lol",          roleName: "LoL",           label: "League of Legends", emoji: "🗡️", description: "Summoner's Rift 1v1" },
+  { value: "cod",          roleName: "Call of Duty",  label: "Call of Duty",      emoji: "🔫", description: "BO6, MW3, Warzone" },
+  { value: "fifa",         roleName: "EA FC",         label: "EA FC / FIFA",      emoji: "⚽", description: "Online Friendlies" },
+  { value: "fortnite",     roleName: "Fortnite",      label: "Fortnite",          emoji: "🏆", description: "Box Fight / Zone Wars 1v1" },
+  { value: "rocketleague", roleName: "Rocket League", label: "Rocket League",     emoji: "🚗", description: "Private match 1v1" },
+  { value: "nba2k",        roleName: "NBA 2K",        label: "NBA 2K",            emoji: "🏀", description: "Play Now Online" },
+  { value: "madden",       roleName: "Madden",        label: "Madden NFL",        emoji: "🏈", description: "Head to Head" },
+  { value: "mariokart",    roleName: "Mario Kart",    label: "Mario Kart",        emoji: "🏁", description: "VS Race" },
+];
 
 const PLATFORM_DISPLAY: Record<string, { name: string; usernameHint: string }> = {
   steam:       { name: "Steam",       usernameHint: "Custom URL name (e.g. oliver) or SteamID64" },
@@ -139,10 +156,11 @@ export async function handleVerifySubmit(interaction: ModalSubmitInteraction, pl
     content: [
       `✅ Linked **${meta.name}**: \`${username}\``,
       ``,
-      `This is saved but not cryptographically verified. You can link Steam or Xbox for a verified badge.`,
+      `Saved on trust — you can link Steam or Xbox later for a verified badge.`,
       ``,
-      `The server is now unlocked — welcome.`,
+      `**Pick the games you play** to unlock their channels:`,
     ].join("\n"),
+    components: [buildGamePickerRow()],
   });
 }
 
@@ -206,8 +224,11 @@ export async function handleVerifyCheck(interaction: ButtonInteraction, platform
     content: [
       `✅ **Verified!** ${platform === "steam" ? "Steam" : "Xbox"} account **${pending.platformUsername}** linked.`,
       ``,
-      `You can remove the code from your profile now. The server is unlocked — welcome.`,
+      `You can remove the code from your profile now.`,
+      ``,
+      `**Pick the games you play** to unlock their channels:`,
     ].join("\n"),
+    components: [buildGamePickerRow()],
   });
 }
 
@@ -257,4 +278,78 @@ async function grantVerifiedRole(interaction: ButtonInteraction | ModalSubmitInt
   } catch (err: any) {
     console.error("[VerifyGate] grantVerifiedRole error:", err?.message);
   }
+}
+
+// ── Game picker ──
+
+function buildGamePickerRow() {
+  const select = new StringSelectMenuBuilder()
+    .setCustomId("vgame_pick")
+    .setPlaceholder("Select games you play…")
+    .setMinValues(1)
+    .setMaxValues(GAME_ROLES.length)
+    .addOptions(
+      GAME_ROLES.map((g) =>
+        new StringSelectMenuOptionBuilder()
+          .setLabel(g.label)
+          .setValue(g.value)
+          .setDescription(g.description)
+          .setEmoji(g.emoji),
+      ),
+    );
+  return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);
+}
+
+/** vgame_pick — user selected games, grant the matching roles */
+export async function handleGamePick(interaction: StringSelectMenuInteraction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const guild = interaction.guild;
+  if (!guild) return interaction.editReply({ content: "Run this in the server." });
+
+  await guild.roles.fetch();
+  const member = await guild.members.fetch(interaction.user.id);
+
+  const picked: string[] = [];
+  const missing: string[] = [];
+
+  for (const value of interaction.values) {
+    const def = GAME_ROLES.find((g) => g.value === value);
+    if (!def) continue;
+
+    const role = guild.roles.cache.find((r) => r.name === def.roleName);
+    if (!role) {
+      missing.push(def.label);
+      continue;
+    }
+
+    if (!member.roles.cache.has(role.id)) {
+      try {
+        await member.roles.add(role, "Game selection from verify gate");
+      } catch (err: any) {
+        missing.push(`${def.label} (${err?.message ?? "failed"})`);
+        continue;
+      }
+    }
+    picked.push(`${def.emoji} ${def.label}`);
+  }
+
+  const lines = [];
+  if (picked.length > 0) {
+    lines.push(`✅ Added: ${picked.join(", ")}`);
+    lines.push(``);
+    lines.push(`Those game channels are now visible in your sidebar. Welcome.`);
+  }
+  if (missing.length > 0) {
+    lines.push(``);
+    lines.push(`⚠ Couldn't assign: ${missing.join(", ")} — ask an admin.`);
+  }
+
+  // Replace the message (remove the menu so it can't be re-picked)
+  try {
+    await interaction.editReply({
+      content: lines.join("\n"),
+      components: [],
+    });
+  } catch {}
 }

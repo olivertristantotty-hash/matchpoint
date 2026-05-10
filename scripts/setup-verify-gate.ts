@@ -182,12 +182,21 @@ async function main() {
   // Community servers pin a few channels (rules, server guide entries) open to
   // @everyone at the Discord platform level — we can't hide those. For those
   // channels we fall back to "visible but read-only with no interactive UI".
-  // Everything actionable (find-match, game channels, etc.) stays fully locked.
+  //
+  // GAMES category channels (valorant-wagers, lol-wagers, etc.) are intentionally
+  // skipped here — they stay gated to their per-game roles only, not @Verified.
+  // Users pick which games they play after verifying.
 
   console.log("\n── Locking Other Channels ──");
   let lockedCount = 0;
   let readOnlyCount = 0;
+  let skippedGamesCount = 0;
   const stillPublicChannels: string[] = [];
+
+  // Find the GAMES category so we can skip its children
+  const gamesCategory = guild.channels.cache.find(
+    (c) => c?.type === ChannelType.GuildCategory && c.name === "GAMES",
+  );
 
   for (const [, ch] of guild.channels.cache) {
     if (!ch) continue;
@@ -197,6 +206,12 @@ async function main() {
 
     // Skip categories — they inherit from children; we'll re-sync below
     if (ch.type === ChannelType.GuildCategory) continue;
+
+    // Skip GAMES category children — they're gated to per-game roles only
+    if (gamesCategory && "parentId" in ch && ch.parentId === gamesCategory.id) {
+      skippedGamesCount++;
+      continue;
+    }
 
     // Only mess with text-like channels for now
     if (
@@ -298,26 +313,40 @@ async function main() {
     }
   }
   console.log(`  ✓  Fully locked ${lockedCount} channels behind @${VERIFIED_ROLE_NAME}`);
+  if (skippedGamesCount > 0) {
+    console.log(`  ⓘ  Skipped ${skippedGamesCount} GAMES channel(s) — stay gated to per-game roles`);
+  }
   if (readOnlyCount > 0) {
     console.log(`  ⓘ  ${readOnlyCount} Community-pinned channel(s) made read-only for @everyone: ${stillPublicChannels.map((n) => `#${n}`).join(", ")}`);
   }
 
-  // Also sync category permissions so new children under them inherit correctly
+  // Also sync category permissions so new children under them inherit correctly.
+  // GAMES category stays hidden at the @Verified level — only per-game roles see it.
   for (const [, cat] of guild.channels.cache) {
     if (cat?.type !== ChannelType.GuildCategory) continue;
+
+    const isGamesCategory = (cat as CategoryChannel).name === "GAMES";
+
     try {
-      await (cat as CategoryChannel).permissionOverwrites.set([
+      const overwrites = [
         {
           id: guild.roles.everyone.id,
           type: OverwriteType.Role,
           deny: [PermissionFlagsBits.ViewChannel],
         },
-        {
+      ];
+
+      // Only non-GAMES categories are visible to @Verified
+      if (!isGamesCategory) {
+        overwrites.push({
           id: verifiedRole.id,
           type: OverwriteType.Role,
+          deny: [],
           allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory],
-        },
-      ]);
+        } as any);
+      }
+
+      await (cat as CategoryChannel).permissionOverwrites.set(overwrites as any);
     } catch {}
   }
 

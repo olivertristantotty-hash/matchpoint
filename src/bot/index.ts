@@ -5,7 +5,7 @@ import { handleCommand } from "./handler.js";
 import { handleButton } from "./buttons.js";
 import { handleContextMenu, handleGameSelect, handleTitleSelect, handlePlatformSelect, handleAmountModal } from "./context-menu.js";
 import { handleOnboardingButton, buildOnboardingMessage, handleSetupButton } from "./onboarding.js";
-import { handleVerifyStart, handleVerifySubmit, handleVerifyCheck } from "./verify-gate.js";
+import { handleVerifyStart, handleVerifySubmit, handleVerifyCheck, handleGamePick } from "./verify-gate.js";
 import { setBotClient, sendWelcomeDM } from "./notifications.js";
 
 config();
@@ -87,7 +87,9 @@ async function main() {
       // Select menus (game picker from context menu)
       else if (interaction.isStringSelectMenu()) {
         const id = interaction.customId;
-        if (id.startsWith("wager_game:") || id.startsWith("fp_game:")) {
+        if (id === "vgame_pick") {
+          await handleGamePick(interaction);
+        } else if (id.startsWith("wager_game:") || id.startsWith("fp_game:")) {
           await handleGameSelect(interaction);
         } else if (id.startsWith("wager_title:") || id.startsWith("fp_title:")) {
           await handleTitleSelect(interaction);
