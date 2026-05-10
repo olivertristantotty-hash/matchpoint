@@ -38,6 +38,12 @@ import {
   verifyXboxProfile,
   supportsVerification,
 } from "../services/account-verify.js";
+import {
+  startRiotVerification,
+  checkRiotVerification,
+  clearRiotPending,
+  SUPPORTED_REGIONS,
+} from "../services/riot-verify.js";
 import { identityService } from "../services/identity.js";
 import { assignPlatformRole } from "./buttons.js";
 
@@ -91,6 +97,22 @@ export async function handleVerifyStart(interaction: ButtonInteraction, platform
     new ActionRowBuilder<TextInputBuilder>().addComponents(usernameInput),
   );
 
+  // Riot needs a region too
+  if (platform === "riot") {
+    const regionInput = new TextInputBuilder()
+      .setCustomId("region")
+      .setLabel("Region (na, euw, eune, kr, jp, br, lan, las, oce, ru, tr)")
+      .setPlaceholder("na")
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true)
+      .setMinLength(2)
+      .setMaxLength(4);
+
+    modal.addComponents(
+      new ActionRowBuilder<TextInputBuilder>().addComponents(regionInput),
+    );
+  }
+
   await interaction.showModal(modal);
 }
 
@@ -133,9 +155,47 @@ export async function handleVerifySubmit(interaction: ModalSubmitInteraction, pl
     });
   }
 
-  // Riot / PlayStation / Activision — unverified link
-  // (Acceptable for now; they can still play and we mark them as unverified
-  //  in the DB. Real-money wagers can require a verified link later.)
+  // Riot — real verification via summoner icon challenge
+  if (platform === "riot") {
+    const region = interaction.fields.getTextInputValue("region").trim();
+    const result = await startRiotVerification(user.id, username, region);
+
+    if (!result.success) {
+      return interaction.editReply({ content: result.error });
+    }
+
+    const checkRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId("vcheck:riot")
+        .setLabel("I've changed my icon — Verify")
+        .setEmoji("✅")
+        .setStyle(ButtonStyle.Success),
+    );
+
+    return interaction.editReply({
+      content: [
+        `**Verify your Riot account**`,
+        ``,
+        `Linking as: \`${result.riotId}\``,
+        ``,
+        `**Change your League of Legends summoner icon to icon ID \`${result.targetIconId}\`:**`,
+        `${result.iconUrl}`,
+        ``,
+        `1. Open League of Legends`,
+        `2. Click your profile icon (top-left)`,
+        `3. Go to **Collection → Summoner Icons**`,
+        `4. Find and equip icon ID **${result.targetIconId}** (shown above)`,
+        `5. Click **Verify** below`,
+        ``,
+        `You can switch back to your old icon after verification. (Expires in 10 minutes.)`,
+      ].join("\n"),
+      components: [checkRow],
+    });
+  }
+
+  // PlayStation / Activision — unverified link for now.
+  // (Cross-verification policy: these don't grant access to real-money wagers
+  //  on their own — see identity.ts preWagerIdentityCheck.)
   await db.insert(gameAccounts)
     .values({
       id: nanoid(),
@@ -169,6 +229,61 @@ export async function handleVerifyCheck(interaction: ButtonInteraction, platform
   await interaction.deferReply({ ephemeral: true });
 
   const user = await userService.ensureUser(interaction.user.id, interaction.user.username);
+
+  // Riot uses a different verification flow (icon challenge)
+  if (platform === "riot") {
+    const result = await checkRiotVerification(user.id);
+    if (!result) {
+      return interaction.editReply({
+        content: "Verification expired or missing. Click **Riot** on #verify to start over.",
+      });
+    }
+
+    if (!result.matched) {
+      return interaction.editReply({
+        content: [
+          `Icon didn't match. We still see icon \`${result.currentIconId}\` on your account.`,
+          ``,
+          `You need to equip icon ID **\`${result.targetIconId}\`** in League of Legends.`,
+          `Riot can take 30–60 seconds to reflect the change. Wait a moment and click Verify again.`,
+        ].join("\n"),
+      });
+    }
+
+    await db.insert(gameAccounts)
+      .values({
+        id: nanoid(),
+        userId: user.id,
+        platform: "riot",
+        platformUserId: result.puuid,
+        platformUsername: result.riotId,
+      })
+      .onConflictDoUpdate({
+        target: [gameAccounts.userId, gameAccounts.platform],
+        set: {
+          platformUserId: result.puuid,
+          platformUsername: result.riotId,
+          linkedAt: new Date(),
+        },
+      });
+
+    clearRiotPending(user.id);
+    await grantVerifiedRole(interaction);
+    try { await assignPlatformRole(interaction, "riot"); } catch {}
+
+    return interaction.editReply({
+      content: [
+        `✅ **Verified!** Riot account **${result.riotId}** linked.`,
+        ``,
+        `You can switch back to your old icon whenever you want.`,
+        ``,
+        `**Pick the games you play** to unlock their channels:`,
+      ].join("\n"),
+      components: [buildGamePickerRow()],
+    });
+  }
+
+  // Steam / Xbox (code-in-bio)
   const pending = getPendingVerification(user.id, platform);
 
   if (!pending) {
