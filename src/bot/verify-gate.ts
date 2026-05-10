@@ -101,8 +101,8 @@ export async function handleVerifyStart(interaction: ButtonInteraction, platform
   if (platform === "riot") {
     const regionInput = new TextInputBuilder()
       .setCustomId("region")
-      .setLabel("Region (na, euw, eune, kr, jp, br, lan, las, oce, ru, tr)")
-      .setPlaceholder("na")
+      .setLabel("Region")
+      .setPlaceholder("na, euw, eune, kr, jp, br, lan, las, oce")
       .setStyle(TextInputStyle.Short)
       .setRequired(true)
       .setMinLength(2)
